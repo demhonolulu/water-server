@@ -1,0 +1,28 @@
+{
+  "name": "water-server",
+  "version": "1.0.0",
+  "description": "fetches water data for processing and sends it to dashboard for display",
+  "homepage": "https://github.com/demhonolulu/water-server#readme",
+  "bugs": {
+    "url": "https://github.com/demhonolulu/water-server/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/demhonolulu/water-server.git"
+  },
+  "license": "ISC",
+  "author": "tomidt",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "update-schema": "psql -U postgres -d water_server -f sql/schema.sql"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

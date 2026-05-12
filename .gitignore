@@ -1,0 +1,28 @@
+# dependencies
+node_modules/
+
+# environment variables
+.env
+
+# logs
+logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# editor settings
+.vscode/
+.idea/
+
+# build output
+dist/
+build/
+
+# PostgreSQL temporary files
+*.sql.bak
+
+# cloudflared credentials
+.cloudflared/
