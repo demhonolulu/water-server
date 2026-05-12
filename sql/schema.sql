@@ -1,65 +1,78 @@
--- 1. Locations Table
+-- Locations Table
+--   mostly static reference data for gauges, updated every month
 CREATE TABLE gauge_locations (
-    gauge_id VARCHAR(50) PRIMARY KEY,
-    gauge_type VARCHAR(10) NOT NULL, -- 'USGS' or 'UHSLC'
+    gauge_id VARCHAR(50) PRIMARY KEY, -- 'USGS-213308158035601'
+    gauge_type VARCHAR(10) NOT NULL, -- 'USGS' || 'UHSLC'
     full_name VARCHAR(255),
     short_name VARCHAR(100),
     lat DECIMAL(10, 8),
     lng DECIMAL(11, 8),
-    area VARCHAR(50),
-    site_type_code VARCHAR(10),
-    site_type VARCHAR(50),
-    thresholds JSON, -- Stores the object: {"base": 1.2, ...}
+    area VARCHAR(50), -- 'NORTH SHORE'
+    site_type_code VARCHAR(10), -- 'ST'
+    site_type VARCHAR(50), -- 'Stream'
+    thresholds JSON, -- {"base": 1.2, ...}
     dlnr_link TEXT,
-    display_order SERIAL UNIQUE, -- Unique number that persists
+    display_order SERIAL UNIQUE,
     nws_notes TEXT,
     eoc_procedure TEXT,
     active BOOLEAN DEFAULT TRUE
 );
 
--- 2. Actual Data Table (High Volume)
+-- Gauge Readings Table
+--   actual gauge data, data will be every 5 min, but updated every hour 
+--   for gauge graph, pull single gauge_id - most recent week
+--   data kept for 1 week
 CREATE TABLE gauge_readings (
     id SERIAL PRIMARY KEY,
     gauge_id VARCHAR(50) REFERENCES gauge_locations(gauge_id),
     reading_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
-    val DECIMAL(10, 3),
+    val DECIMAL(6, 2), -- up to '9999.99'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Update Reports Table
+-- Update Logs Table
+--   list of all times we got new gauge readings
+--   for gauge table, pull all gauge_ids - most recent entry + 1h previous
+--   data kept for 1 week
 CREATE TABLE update_logs (
     id SERIAL PRIMARY KEY,
     gauge_id VARCHAR(50) REFERENCES gauge_locations(gauge_id),
     fetch_datetime TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     reading_datetime TIMESTAMP WITH TIME ZONE,
-    val DECIMAL(10, 3)
+    val DECIMAL(6, 2)
 );
 
--- 4. Daily Reports Table
+-- Daily Summaries Table
+--   daily report
+--   for detailed view of individual gauge
+--   data kept for 1 year
 CREATE TABLE daily_summaries (
     gauge_id VARCHAR(50) REFERENCES gauge_locations(gauge_id),
     report_date DATE NOT NULL,
-    min_val DECIMAL(10, 3),
-    max_val DECIMAL(10, 3),
-    avg_val DECIMAL(10, 3),
-    min_wait DECIMAL(10, 3),
-    max_wait DECIMAL(10, 3),
-    avg_wait DECIMAL(10, 3),
+    min_val DECIMAL(6, 2),
+    max_val DECIMAL(6, 2),
+    avg_val DECIMAL(6, 2),
+    min_wait DECIMAL(6, 2),
+    max_wait DECIMAL(6, 2),
+    avg_wait DECIMAL(6, 2),
     report_count INT,
     PRIMARY KEY (gauge_id, report_date)
 );
 
--- 5. Monthly Reports Table
+-- Monthly Summaries Table
+--   monthly report
+--   for detailed view of individual gauge
+--   data kept indefinetly
 CREATE TABLE monthly_summaries (
     gauge_id VARCHAR(50) REFERENCES gauge_locations(gauge_id),
     report_month INT CHECK (report_month BETWEEN 1 AND 12),
     report_year INT,
-    min_val DECIMAL(10, 3),
-    max_val DECIMAL(10, 3),
-    avg_val DECIMAL(10, 3),
-    min_wait DECIMAL(10, 3),
-    max_wait DECIMAL(10, 3),
-    avg_wait DECIMAL(10, 3),
+    min_val DECIMAL(6, 2),
+    max_val DECIMAL(6, 2),
+    avg_val DECIMAL(6, 2),
+    min_wait DECIMAL(6, 2),
+    max_wait DECIMAL(6, 2),
+    avg_wait DECIMAL(6, 2),
     report_count INT,
     PRIMARY KEY (gauge_id, report_month, report_year)
 );
