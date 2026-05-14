@@ -1,7 +1,7 @@
 const express = require('express');
 const cron = require("node-cron");
 
-const { updateLocations } = require("./scheduled/update_locations");
+const { updateLocations } = require("./src/scheduled/update_locations");
 
 const app = express();
 const PORT = 3000;
