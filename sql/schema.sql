@@ -15,7 +15,8 @@ CREATE TABLE gauge_locations (
     display_order SERIAL UNIQUE,
     nws_notes TEXT,
     eoc_procedure TEXT,
-    active BOOLEAN DEFAULT TRUE
+    active BOOLEAN DEFAULT TRUE,
+    last_update TIMESTAMP WITH TIME ZONE
 );
 
 -- Gauge Readings Table
