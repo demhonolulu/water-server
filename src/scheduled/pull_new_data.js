@@ -1,6 +1,6 @@
 const { getUSGSGaugeData } = require("../functions/api_calls.js");
 const { getHawaiiTimeNow } = require("../functions/time.js");
-const pool = require("../db");
+const { pool, addToTable } = require("../database/db.js");
 
 const cron = require("node-cron");
 
@@ -46,8 +46,10 @@ async function pullGaugeData(locations = null) {
 }
 
 async function processUSGSData(data, usgsIds) {
+    // group gauge data by usgs id
     const dataGrouped = groupDataByID(data);
 
+    // pull last reading from update logs
     const gaugeIds = usgsIds.split(",");
     const result = await pool.query(`
         SELECT DISTINCT ON (gauge_id) *
@@ -56,26 +58,35 @@ async function processUSGSData(data, usgsIds) {
         ORDER BY gauge_id, reading_datetime DESC
     `, [gaugeIds]);
 
+    // converts to object for easier lookup
     const latestByGaugeId = {};
     result.rows.forEach(row => {
         latestByGaugeId[row.gauge_id] = row;
     });
 
-    Object.entries(dataGrouped).forEach(([key, values]) => {
-        const lastReading = latestByGaugeId[key];
+    const columnNames = ['gauge_id', 'reading_datetime', 'val'];
+    Object.entries(dataGrouped).forEach(([gauge_id, values]) => {
+        const lastReading = latestByGaugeId[gauge_id];
+
+        values.sort((a, b) => {
+            return new Date(b.properties.time) - new Date(a.properties.time);
+        });
 
         // no reading, add first entry to tables
         if (!lastReading) {
+            // add to update logs
+            addToTable('update_logs', columnNames, [gauge_id, values[0].properties.time, values[0].properties.value]); 
 
+            // add to gauge readings
+
+            return;
         }
+        
 
+        /*
         console.log("Gauge ID:", key);
-        console.log("Values:", values);
+        console.log("Values:", values);*/
     });
-
-    console.log(dataGrouped);
-    console.log(result);
-    
 }
 
 async function processUHSLCData(data) {
@@ -83,6 +94,11 @@ async function processUHSLCData(data) {
 }
 
 function groupDataByID(data) {
+    if (!Array.isArray(data)) {
+        console.error("groupDataByID expected array:", data);
+        return {};
+    }
+
     return data.reduce((acc, item) => {
         const id = item?.properties?.monitoring_location_id;
 

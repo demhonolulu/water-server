@@ -1,6 +1,6 @@
 const { getUSGSLocationInfo } = require("../functions/api_calls.js");
 const { getHawaiiTimeNow } = require("../functions/time.js");
-const pool = require("../db");
+const pool= require("../database/db.js");
 
 const cron = require("node-cron");
 
