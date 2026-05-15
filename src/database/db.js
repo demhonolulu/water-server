@@ -1,3 +1,8 @@
+// ── DB ────────────────────────────────────────────────────
+// functions that directly touch the database tables
+// should not be called directly other than by queries.js
+// ──────────────────────────────────────────────────────────
+
 const config = require("../config/env");
 
 const { Pool } = require("pg");
@@ -13,9 +18,9 @@ const pool = new Pool({
 // ── SEARCH ────────────────────────────────────────────────
 /**
 // getter for db records without suffix (ORDER BY, LIMIT, DISTINCT ON)
-//   @param {string} table - Table name
-//   @param {string} whereClause - Optional: The SQL after WHERE (e.g., "active = $1")
-//   @param {any[]} params - Optional: Array of values for the placeholders
+//   @param {string} table* - Table name
+//   @param {string} whereClause - The SQL after WHERE (e.g., "active = $1")
+//   @param {any[]} params - Array of values for the placeholders
 // */
 async function getFromTable(table, whereClause = "1=1", params = []) {
     const queryText = `
@@ -35,13 +40,13 @@ async function getFromTable(table, whereClause = "1=1", params = []) {
 // ── ADD ───────────────────────────────────────────────────
 /**
 // add single item to table
-//   @param {string}    table   - 'update_logs'
-//   @param {string[]}  columns - ['gauge_id', 'reading_datetime', 'val']
-//   @param {any[]}     values  - ['USGS-123', 3.62]
+//   @param {string}    table*   - 'update_logs'
+//   @param {string[]}  columns* - ['gauge_id', 'reading_datetime', 'val']
+//   @param {any[]}     data*    - ['USGS-123', 3.62]
 // */
-async function addToTable(table, columns, values) {
+async function addToTable(table, columns, data) {
     const columnNames = columns.join(', ');
-    const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
+    const placeholders = data.map((_, i) => `$${i + 1}`).join(', ');
 
     const queryText = `
         INSERT INTO ${table} (${columnNames})
@@ -50,7 +55,7 @@ async function addToTable(table, columns, values) {
     `;
 
     try {
-        const result = await pool.query(queryText, values);
+        const result = await pool.query(queryText, data);
         return; 
     } catch (err) {
         console.error(`Database Error [Table: ${table}]:`, err.message);
@@ -60,9 +65,9 @@ async function addToTable(table, columns, values) {
 
 /**
 // bulk add items to postgres table
-//   @param {string}   table     - 'update_logs'
-//   @param {string[]} columns   - ['gauge_id', 'reading_datetime', 'val']
-//   @param {Object[]} dataArray - [{ id: 'USGS-1', val: 1.2 }, { id: 'USGS-2', val: 3.4 }]
+//   @param {string}   table*     - 'update_logs'
+//   @param {string[]} columns*   - ['gauge_id', 'reading_datetime', 'val']
+//   @param {Object[]} dataArray* - [{ id: 'USGS-1', val: 1.2 }, { id: 'USGS-2', val: 3.4 }]
 // */
 async function bulkInsertToTable(table, columns, dataArray) {
     const columnNames = columnsArray.join(', ');
@@ -95,6 +100,7 @@ async function bulkInsertToTable(table, columns, dataArray) {
 
 module.exports = {
     pool,
+    getFromTable,
     addToTable,
     bulkInsertToTable
 };
