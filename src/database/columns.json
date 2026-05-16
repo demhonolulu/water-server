@@ -1,0 +1,182 @@
+{
+  "gauge_locations": {
+    "gauge_id": {
+      "type": "string",
+      "required": true,
+      "maxLength": 50
+    },
+    "gauge_type": {
+      "type": "string",
+      "required": true,
+      "allowedValues": ["USGS", "UHSLC"]
+    },
+    "full_name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "short_name": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "lat": {
+      "type": "number",
+      "min": -90,
+      "max": 90
+    },
+    "lng": {
+      "type": "number",
+      "min": -180,
+      "max": 180
+    },
+    "area": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "site_type_code": {
+      "type": "string",
+      "maxLength": 10
+    },
+    "site_type": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "thresholds": {
+      "type": "object"
+    },
+    "dlnr_link": {
+      "type": "string"
+    },
+    "display_order": {
+      "type": "integer",
+      "min": 1
+    },
+    "nws_notes": {
+      "type": "string"
+    },
+    "eoc_procedure": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "last_update": {
+      "type": "datetime"
+    }
+  },
+
+  "gauge_readings": {
+    "id": {
+      "type": "integer"
+    },
+    "gauge_id": {
+      "type": "string",
+      "required": true,
+      "maxLength": 50
+    },
+    "reading_datetime": {
+      "type": "datetime",
+      "required": true
+    },
+    "val": {
+      "type": "number"
+    },
+    "created_at": {
+      "type": "datetime"
+    }
+  },
+
+  "update_logs": {
+    "id": {
+      "type": "integer"
+    },
+    "gauge_id": {
+      "type": "string",
+      "required": true,
+      "maxLength": 50
+    },
+    "fetch_datetime": {
+      "type": "datetime"
+    },
+    "reading_datetime": {
+      "type": "datetime"
+    },
+    "val": {
+      "type": "number"
+    }
+  },
+
+  "daily_summaries": {
+    "gauge_id": {
+      "type": "string",
+      "required": true,
+      "maxLength": 50
+    },
+    "report_date": {
+      "type": "date",
+      "required": true
+    },
+    "min_val": {
+      "type": "number"
+    },
+    "max_val": {
+      "type": "number"
+    },
+    "avg_val": {
+      "type": "number"
+    },
+    "min_wait": {
+      "type": "number"
+    },
+    "max_wait": {
+      "type": "number"
+    },
+    "avg_wait": {
+      "type": "number"
+    },
+    "report_count": {
+      "type": "integer",
+      "min": 0
+    }
+  },
+
+  "monthly_summaries": {
+    "gauge_id": {
+      "type": "string",
+      "required": true,
+      "maxLength": 50
+    },
+    "report_month": {
+      "type": "integer",
+      "required": true,
+      "min": 1,
+      "max": 12
+    },
+    "report_year": {
+      "type": "integer",
+      "required": true,
+      "min": 2000
+    },
+    "min_val": {
+      "type": "number"
+    },
+    "max_val": {
+      "type": "number"
+    },
+    "avg_val": {
+      "type": "number"
+    },
+    "min_wait": {
+      "type": "number"
+    },
+    "max_wait": {
+      "type": "number"
+    },
+    "avg_wait": {
+      "type": "number"
+    },
+    "report_count": {
+      "type": "integer",
+      "min": 0
+    }
+  }
+}

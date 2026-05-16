@@ -4,6 +4,7 @@
 // ──────────────────────────────────────────────────────────
 
 const config = require("../config/env");
+const columns = require("./columns.json");
 
 const { Pool } = require("pg");
 
@@ -98,9 +99,181 @@ async function bulkInsertToTable(table, columns, dataArray) {
     }
 }
 
+// ── VALIDATION ────────────────────────────────────────────
+/**
+// validate table and with column names
+//   @param {string} table
+//   @param {string[]} columns
+//   
+//   @returns {{
+//     valid: boolean,
+//     errors: Object[]
+//   }}
+//  */
+function validateColumns(table, columns) {
+    const errors = [];
+
+    const tableConfig = columnsConfig[table];
+    if (!tableConfig) {
+        return {
+            valid: false,
+            errors: [{ error: `Invalid table: ${table}` }],
+        };
+    }
+
+    for (const column of columns) {
+        if (!tableConfig[column]) {
+            errors.push({ column, error: `Invalid column` });
+        }
+    }
+
+    if (errors.length > 0) {
+        return {
+            valid: false,
+            errors,
+        };
+    }
+}
+
+/**
+// validate bulk insert payload
+//   @param {string} table
+//   @param {string[]} columns
+//   @param {Object[]} dataArray
+//   
+//   @returns {{
+//     valid: boolean,
+//     errors: Object[],
+//     sanitizedRows: Object[]
+//   }}
+//  */
+function validateBulk(table, columns, dataArray) {
+    const errors = [];
+    const sanitizedRows = [];
+
+    const tableConfig = columnsConfig[table];
+    if (!tableConfig) {
+        return {
+            valid: false,
+            errors: [{ error: `Invalid table: ${table}` }],
+            sanitizedRows: []
+        };
+    }
+
+    for (const column of columns) {
+        if (!tableConfig[column]) {
+            errors.push({ column, error: `Invalid column` });
+        }
+    }
+
+    if (errors.length > 0) {
+        return {
+            valid: false,
+            errors,
+            sanitizedRows: []
+        };
+    }
+
+    dataArray.forEach((row, rowIndex) => {
+        const sanitizedRow = {};
+        for (const column of columns) {
+            const rules = tableConfig[column];
+            const value = row[column];
+
+            if (rules.required && (value === undefined || value === null || value === "")) {
+                errors.push({
+                    row: rowIndex,
+                    column,
+                    error: "Required value missing"
+                });
+
+                continue;
+            }
+
+            // allow nullable
+            if (value === undefined || value === null) {
+                sanitizedRow[column] = null;
+                continue;
+            }
+
+            switch (rules.type) {
+                case "string":
+                    if (typeof value !== "string") {
+                        errors.push({row: rowIndex, column, value, error: "Must be string"});
+                        continue;
+                    }
+                    if (rules.maxLength && value.length > rules.maxLength) {
+                        errors.push({row: rowIndex, column, value, error: `Exceeds max length ${rules.maxLength}`});
+                        continue;
+                    }
+                    break;
+                case "number":
+                    if (typeof value !== "number" || Number.isNaN(value)) {
+                        errors.push({row: rowIndex, column, value, error: "Must be number"});
+                        continue;
+                    }
+                    break;
+                case "integer":
+                    if (!Number.isInteger(value)) {
+                        errors.push({row: rowIndex, column, value, error: "Must be integer"});
+                        continue;
+                    }
+                    break;
+                case "boolean":
+                    if (typeof value !== "boolean") {
+                        errors.push({row: rowIndex, column, value, error: "Must be boolean"});
+                        continue;
+                    }
+                    break;
+                case "datetime":
+                    if (isNaN(Date.parse(value))) {
+                        errors.push({row: rowIndex, column, value, error: "Invalid datetime"});
+                        continue;
+                    }
+                    break;
+                case "date":
+                    if (isNaN(Date.parse(value))) {
+                        errors.push({row: rowIndex, column, value, error: "Invalid date"});
+                        continue;
+                    }
+                    break;
+                case "object":
+                    if (typeof value !== "object" || Array.isArray(value)) {
+                        errors.push({row: rowIndex, column, value, error: "Must be object"});
+                        continue;
+                    }
+                    break;
+            }
+            if (rules.min !== undefined && value < rules.min) {
+                errors.push({row: rowIndex, column, value, error: `Below minimum ${rules.min}`});
+                continue;
+            }
+            if (rules.max !== undefined && value > rules.max) {
+                errors.push({row: rowIndex, column, value, error: `Above maximum ${rules.max}`});
+                continue;
+            }
+            if (rules.allowedValues && !rules.allowedValues.includes(value)) {
+                errors.push({row: rowIndex, column, value, error: `Invalid value`});
+                continue;
+            }
+            // passed validation
+            sanitizedRow[column] = value;
+        }
+        sanitizedRows.push(sanitizedRow);
+    });
+
+    return {
+        valid: errors.length === 0,
+        errors,
+        sanitizedRows
+    };
+}
+
 module.exports = {
     pool,
     getFromTable,
     addToTable,
-    bulkInsertToTable
+    bulkInsertToTable,
+    validateBulk,
+    validateColumns
 };
