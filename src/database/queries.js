@@ -12,6 +12,11 @@ const { pool, getFromTable, addToTable, bulkInsertToTable, validateColumns } = r
 async function getActiveLocations(groupBy = null) {
     if (groupBy) {
         const valid = validateColumns('gauge_locations', groupBy);
+        console.log(valid);
     }
     
 }
+
+module.exports = {
+    getActiveLocations
+};

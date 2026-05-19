@@ -4,7 +4,7 @@
 // ──────────────────────────────────────────────────────────
 
 const config = require("../config/env");
-const columns = require("./columns.json");
+const columnsConfig = require("./columns.json");
 
 const { Pool } = require("pg");
 
@@ -71,13 +71,13 @@ async function addToTable(table, columns, data) {
 //   @param {Object[]} dataArray* - [{ id: 'USGS-1', val: 1.2 }, { id: 'USGS-2', val: 3.4 }]
 // */
 async function bulkInsertToTable(table, columns, dataArray) {
-    const columnNames = columnsArray.join(', ');
+    const columnNames = columns.join(', ');
     const values = [];
     const valuePlaceholders = [];
 
     // loop through the data to create ($1, $2, $3), ($4, $5, $6) etc.
     dataArray.forEach((row, rowIndex) => {
-        const rowPlaceholders = columnsArray.map((col, colIndex) => {
+        const rowPlaceholders = columns.map((col, colIndex) => {
             values.push(row[col]);
             return `$${values.length}`;
         });

@@ -1,12 +1,15 @@
 const { getUSGSGaugeData } = require("../functions/api_calls.js");
 const { getHawaiiTimeNow } = require("../functions/time.js");
 const { pool, addToTable } = require("../database/db.js");
+const { getActiveLocations } = require("../database/queries.js");
 
 const cron = require("node-cron");
 
 // update (gauge_readings) table
 //   if parameter passed, only update that location, otherwise update all active locations
 async function pullGaugeData(locations = null) {
+    getActiveLocations('type');
+    /*
     try {
         if (locations) {
             return;
@@ -39,7 +42,7 @@ async function pullGaugeData(locations = null) {
         console.error(error);
 
         return null;
-    }
+    }*/
 
     //console.log(`⏰ Updating locations: Started at [${getHawaiiTimeNow()}]`);
     return;
