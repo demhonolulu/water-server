@@ -5,6 +5,7 @@
 
 const config = require("../config/env");
 const columnsConfig = require("./columns.json");
+const { printErrorArray } = require("../functions/logs.js");
 
 const { Pool } = require("pg");
 
@@ -132,6 +133,10 @@ function validateColumns(table, columns) {
             valid: false,
             errors,
         };
+    }
+
+    return {
+        valid: true
     }
 }
 

@@ -5,44 +5,41 @@ const { getActiveLocations } = require("../database/queries.js");
 
 const cron = require("node-cron");
 
+// global object with comma seperated string of active gauges grouped by gauge_type
+// { "USGS": "a,b,c", "UHSLC": ""}
+let ACTIVE_LOCATIONS = null;
+
 // update (gauge_readings) table
 //   if parameter passed, only update that location, otherwise update all active locations
-async function pullGaugeData(locations = null) {
-    getActiveLocations('type');
-    /*
+async function pullGaugeData(locations = null) {    
     try {
-        if (locations) {
-            return;
+        // if locs have not been initalized
+        if (!ACTIVE_LOCATIONS) {
+            const activeLocations = await getActiveLocations(['gauge_type']);
+            ACTIVE_LOCATIONS = {};
+
+            // maps into comma seperated list by gauge type
+            for (const [gaugeType, locationsArray] of Object.entries(activeLocations)) {
+                ACTIVE_LOCATIONS[gaugeType] = locationsArray
+                    .map(loc => loc.gauge_id)
+                    .join(',');
+            }
         }
 
-        // pulls list of active gauges from db
-        const activeLocations = await pool.query(`
-            SELECT * FROM gauge_locations
-            WHERE active = TRUE
-        `);
+        // pull data for each gauge type
+        Object.keys(ACTIVE_LOCATIONS).forEach(gaugeType => {
+            const idString = ACTIVE_LOCATIONS[gaugeType];
+            
+            // call respective site for update
 
-        if (activeLocations.rows < 1) {
-            throw new Error("No active locations");
-        }
-
-        const usgsIds = activeLocations.rows
-            .filter(row => row.gauge_type === "USGS")
-            .map(row => row.gauge_id)
-            .join(",");
-
-        const uhsclIds = activeLocations.rows
-            .filter(row => row.gauge_type === "UHSLC")
-            .map(row => row.gauge_id)
-            .join(",");
-
-        const rawUsgsData = await getUSGSGaugeData(usgsIds);
-        processUSGSData(rawUsgsData, usgsIds);
-
-    } catch (error) {
+            // 
+            console.log(`Processing ${gaugeType}...`);
+            console.log(`${idString}`);
+        });
+    }
+    catch (error) {
         console.error(error);
-
-        return null;
-    }*/
+    }
 
     //console.log(`⏰ Updating locations: Started at [${getHawaiiTimeNow()}]`);
     return;

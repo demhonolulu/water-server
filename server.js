@@ -36,7 +36,8 @@ app.get('/update-locations', async (req, res) => {
     console.log("/update-locations called");
     
     try {
-        await updateLocations(); 
+        //await updateLocations(); 
+        await pullGaugeData(); 
         
         res.status(200).send("Task completed successfully!");
     } catch (error) {

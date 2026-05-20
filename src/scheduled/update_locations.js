@@ -7,6 +7,8 @@ const cron = require("node-cron");
 // update (gauge_locations) table
 //   if parameter passed, only update that location, otherwise update all active locations
 async function updateLocations(locations = null) {
+    
+    /*
     try {
         
         const result = await pool.query(`
@@ -27,7 +29,7 @@ async function updateLocations(locations = null) {
     }
 
     const output = await getUSGSLocationInfo("USGS-16254000");
-    console.log(output);
+    console.log(output);*/
     return;
 }
 
