@@ -5,7 +5,8 @@
 const { getHawaiiTimeNow } = require("./time.js");
 
 /**
-// custom error class that formats an array of errors into a readable message.
+// ErrorMessage
+//   custom error class that formats an array of errors into a readable message.
 //   @param {string} message - header message
 //   @param {Object[]} errors - [{error: ''}]
 //   @param {int} indent - tab indent of message
@@ -20,7 +21,8 @@ class ErrorMessage extends Error {
 }
 
 /**
-// prints out all errors in the error array
+// getIndentString
+//   prints out all errors in the error array
 //   @param {string} message - header message
 //   @param {Object[]} errors - [{error: ''}]
 //   @param {int} indent - tab indent of message

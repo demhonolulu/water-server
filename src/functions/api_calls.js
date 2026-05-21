@@ -1,4 +1,4 @@
-const { usgsAPIKey, usgsBaseUrl } = require("../config/env");
+const { usgsAPIKey, usgsBaseUrl, usgsTableUrl } = require("../config/env");
 
 async function fetchData(method, url, type, body = null) {
     let data;
@@ -48,37 +48,55 @@ async function getUSGSLocationInfo(locations) {
     return null;
 }
 
-async function callUSGS() {
-    console.log("Updating locations...");
-    console.log(usgsAPIKey);
-    return;
-}
-
-// pulls most recent data for graph every 5m
-async function getUSGSGaugeData(locations) {
-    const gaugeDataURL = "continuous/items?f=json&lang=en-US&limit=50000&skipGeometry=true&unit_of_measure=ft&time=PT3H&properties=monitoring_location_id,value,time&monitoring_location_id=";
-    const url = usgsBaseUrl + gaugeDataURL + locations;
+/**
+// getUSGSGaugeData
+//   calls usgs for latest entry of each active gauge for gauge table
+//   @param {string} locations - string of comma seperated list of ids
+//   @returns {Object} - {'gauge-id': {'value': 1, 'time': ''}}
+// */
+async function getUSGSGOverview(locations) {
+    const url = usgsTableUrl + locations
     const output = await fetchData("GET", url, "USGS");
 
     if (output?.features?.length > 0) {
-        return output.features;
+        const featureMap = Object.fromEntries(
+            output.features.map(f => [
+                f.properties.monitoring_location_id,
+                {
+                    value: parseFloat(f.properties.value),
+                    time: f.properties.time
+                }
+            ])
+        );
+
+        return featureMap;
     }
 
+    // TODO throw error
     return;
+}
+
+async function getAllUSGS(locations, newOverview, currOverview) {
+
 }
 
 // ── UHSLC ─────────────────────────────────────────────────
 
 // pulls most recent data for graph every 5m
-async function getUHSLCGaugeData(locations) {
+async function getUHSLCOverview(locations) {
 
     return;
+}
+
+async function getAllUHSLC(locations, newOverview, currOverview) {
+
 }
 
 
 module.exports = {
     getUSGSLocationInfo,
-    callUSGS,
-    getUSGSGaugeData,
-    getUHSLCGaugeData
+    getUSGSGOverview,
+    getAllUSGS,
+    getUHSLCOverview,
+    getAllUHSLC
 };

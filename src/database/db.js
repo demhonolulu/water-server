@@ -19,11 +19,12 @@ const pool = new Pool({
 
 // ── SEARCH ────────────────────────────────────────────────
 /**
-// getter for db records without suffix (ORDER BY, LIMIT, DISTINCT ON)
+// getFromTable
+//   getter for db records without suffix (ORDER BY, LIMIT, DISTINCT ON)
 //   @param {string} table* - Table name
 //   @param {string} whereClause - The SQL after WHERE (e.g., "active = $1")
 //   @param {any[]} params - Array of values for the placeholders
-// */
+// 
 async function getFromTable(table, whereClause = "1=1", params = []) {
     const queryText = `
         SELECT * FROM ${table}
@@ -37,11 +38,40 @@ async function getFromTable(table, whereClause = "1=1", params = []) {
         console.error(`Error in getFromTable [${table}]:`, err.message);
         throw err;
     }
+}*/
+
+/**
+// getFromTable
+//   getter for db records without suffix (ORDER BY, LIMIT, DISTINCT ON)
+//   @param {string} table* - Table name
+//   @param {any[]} params - Array of values for the placeholders
+//   @param {string} whereClause - WHERE 'whereClause'
+//   @param {string} distinct - DISTINCT ON (distinct)
+//   @param {string} order - ORDER BY 'order'
+// */
+async function getFromTable(table, params = [], whereClause = "1=1", distinct = null, order = null) {
+    const distinctClause = distinct ? `DISTINCT ON (${distinct})` : '';
+    const orderClause = order ? `ORDER BY ${distinct}` : '';
+    const queryText = `
+        SELECT ${distinctClause} * 
+        FROM ${table}
+        WHERE ${whereClause}
+        ${orderClause}
+    `;
+
+    try {
+        const result = await pool.query(queryText, params);
+        return result.rows;
+    } catch (err) {
+        console.error(`Error in getFromTable [${table}]:`, err.message);
+        throw err;
+    }
 }
 
 // ── ADD ───────────────────────────────────────────────────
 /**
-// add single item to table
+// addToTable
+//   add single item to table
 //   @param {string}    table*   - 'update_logs'
 //   @param {string[]}  columns* - ['gauge_id', 'reading_datetime', 'val']
 //   @param {any[]}     data*    - ['USGS-123', 3.62]
@@ -66,7 +96,8 @@ async function addToTable(table, columns, data) {
 }
 
 /**
-// bulk add items to postgres table
+// bulkInsertToTable
+//   bulk add items to postgres table
 //   @param {string}   table*     - 'update_logs'
 //   @param {string[]} columns*   - ['gauge_id', 'reading_datetime', 'val']
 //   @param {Object[]} dataArray* - [{ id: 'USGS-1', val: 1.2 }, { id: 'USGS-2', val: 3.4 }]
@@ -102,7 +133,8 @@ async function bulkInsertToTable(table, columns, dataArray) {
 
 // ── VALIDATION ────────────────────────────────────────────
 /**
-// validate table and with column names
+// validateColumns
+//   validate table and with column names
 //   @param {string} table
 //   @param {string[]} columns
 //   

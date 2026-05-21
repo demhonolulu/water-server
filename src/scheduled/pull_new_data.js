@@ -1,7 +1,7 @@
-const { getUSGSGaugeData } = require("../functions/api_calls.js");
+const { getUSGSGOverview, getUHSLCOverview } = require("../functions/api_calls.js");
 const { getHawaiiTimeNow } = require("../functions/time.js");
 const { pool, addToTable } = require("../database/db.js");
-const { getActiveLocations } = require("../database/queries.js");
+const { getActiveLocations, getCurrentOverview } = require("../database/queries.js");
 
 const cron = require("node-cron");
 
@@ -11,6 +11,13 @@ let ACTIVE_LOCATIONS = null;
 
 // update (gauge_readings) table
 //   if parameter passed, only update that location, otherwise update all active locations
+
+/**
+// pullGaugeData
+//   calls usgs for latestest entry of each active gauge for gauge table. if entry is new, call again for full data
+//   @param {string} locations - string of comma seperated list of ids
+//   @returns {Object} -
+// */
 async function pullGaugeData(locations = null) {    
     try {
         // if locs have not been initalized
@@ -26,16 +33,22 @@ async function pullGaugeData(locations = null) {
             }
         }
 
-        // pull data for each gauge type
-        Object.keys(ACTIVE_LOCATIONS).forEach(gaugeType => {
-            const idString = ACTIVE_LOCATIONS[gaugeType];
-            
-            // call respective site for update
+        // gets most recent data point
+        const [usgsDataOverview, uhslcDataOverview, currentData] = await Promise.all([
+            getUSGSGOverview(ACTIVE_LOCATIONS['USGS']),
+            getUHSLCOverview(ACTIVE_LOCATIONS['UHSLC']),
+            getCurrentOverview(`${ACTIVE_LOCATIONS['USGS']},${ACTIVE_LOCATIONS['UHSLC']}`)
+        ]);
 
-            // 
-            console.log(`Processing ${gaugeType}...`);
-            console.log(`${idString}`);
-        });
+        // gets list of gauges that have updated
+        const usgsUpdates = createUpdateList(usgsDataOverview, currentData?.USGS);
+        const uhslcUpdates = createUpdateList(uhslcDataOverview, currentData?.UHSLC);
+
+        // gets all data for updated gauges
+        const [usgsData, uhslcData] = await Promise.all([
+            getAllUSGS(usgsUpdates, usgsDataOverview, currentData?.USGS),
+            getAllUHSLC(uhslcUpdates, uhslcDataOverview, currentData?.UHSLC),
+        ]);
     }
     catch (error) {
         console.error(error);
@@ -44,6 +57,32 @@ async function pullGaugeData(locations = null) {
     //console.log(`⏰ Updating locations: Started at [${getHawaiiTimeNow()}]`);
     return;
 }
+
+
+function createUpdateList(newData, currentData) {
+    const updateList = [];
+    if (!newData || !currentData) {
+        return updateList;
+    }
+
+    Object.entries(newData).forEach(([location, data]) => {
+        const curr = currentData[location];
+        if (curr) {
+            const currTime = new Date(curr.reading_datetime);
+            const newTime = new Date(data.time);
+            if (newTime > currTime) {
+                updateList.push(location);
+            }
+        }
+        else {
+            // gauge_id not in logs, add to list
+            updateList.push(location);
+        }
+    })
+
+    return updateList;
+}
+
 
 async function processUSGSData(data, usgsIds) {
     // group gauge data by usgs id
