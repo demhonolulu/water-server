@@ -40,12 +40,17 @@ async function pullGaugeData(locations = null) {
         const usgsUpdates = createUpdateList(usgsDataOverview, currentData?.USGS);
         const uhslcUpdates = createUpdateList(uhslcDataOverview, currentData?.UHSLC);
 
+        console.log("usgsUpdates");
+        console.log(usgsUpdates);
+
         // gets all data for updated gauges
         const [usgsData, uhslcData] = await Promise.all([
             getAllUSGS(usgsUpdates, usgsDataOverview, currentData?.USGS),
             getAllUHSLC(uhslcUpdates, uhslcDataOverview, currentData?.UHSLC),
         ]);
 
+        console.log("usgsData");
+        console.log(usgsData);
         // add new data to gauge_readings and update_logs tables
         const [usgsLog, uhslcLog] = await Promise.all([
             addNewData(usgsData, usgsDataOverview),
@@ -62,7 +67,8 @@ async function pullGaugeData(locations = null) {
 
 function createUpdateList(newData, currentData) {
     const updateList = [];
-    if (!newData || !currentData) return updateList;
+    if (!newData) return updateList;
+    if (!currentData) return Object.keys(newData);
 
     Object.entries(newData).forEach(([location, data]) => {
         const curr = currentData[location];

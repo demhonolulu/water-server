@@ -2,6 +2,22 @@
 // functions that deal with time
 // ──────────────────────────────────────────────────────────
 
+const timers = {};
+
+function startTimer() {
+    const id = crypto.randomUUID();
+    const start = performance.now();
+    timers[id] = start;
+    return id;
+}
+
+function endTimer(id) {
+    if (!timers[id]) return null;
+    const elapsed = performance.now() - timers[id];
+    delete timers[id];
+    return elapsed;
+}
+
 function getHawaiiTimeNow() {
     return new Date().toLocaleString("en-US", {
         timeZone: "Pacific/Honolulu",
@@ -21,11 +37,13 @@ function timeDifferenceInHours(startDT, endDT, max) {
             ? new Date(startDT)
             : maxDT;
     const diff = Math.ceil((end - start) / (1000 * 60 * 60));
-    
+
     return diff;
 }
 
 module.exports = {
+    startTimer,
+    endTimer,
     getHawaiiTimeNow,
     timeDifferenceInHours
 };

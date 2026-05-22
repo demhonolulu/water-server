@@ -2,7 +2,7 @@
 // information logging and printing; mostly for debugging
 // ──────────────────────────────────────────────────────────
 
-const { getHawaiiTimeNow } = require("./time.js");
+const { getHawaiiTimeNow, startTimer, endTimer } = require("./time.js");
 
 /**
 // ErrorMessage
@@ -20,6 +20,16 @@ class ErrorMessage extends Error {
     }
 }
 
+function printToLog(message) {
+    const text = `[${getHawaiiTimeNow()}] ${message}`;
+    console.log(text);
+}
+
+function printTimerStart(message) {
+    const timer = startTimer();
+
+}
+
 /**
 // getIndentString
 //   prints out all errors in the error array
@@ -30,6 +40,7 @@ class ErrorMessage extends Error {
 function getIndentString(indent) {
     return ' '.repeat(indent * 2);
 }
+
 function printErrorArray(message, errors, indent = 0) {
     console.error(`[${getHawaiiTimeNow()}] ${getIndentString(indent)}${message}:`);
     errors.forEach((error) => {
@@ -39,5 +50,6 @@ function printErrorArray(message, errors, indent = 0) {
 
 module.exports = {
     ErrorMessage,
+    printToLog,
     printErrorArray
 };

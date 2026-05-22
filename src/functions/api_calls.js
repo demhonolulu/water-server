@@ -2,7 +2,7 @@ const { usgsAPIKey, usgsBaseUrl, usgsTableUrl, usgsGraphUrl } = require("../conf
 const { timeDifferenceInHours } = require("./time");
 
 const MAX_RESPONSE_ENTRIES = 50000;
-const MAX_PULL_HOURS = 24 * 30;
+const MAX_PULL_HOURS = 2 * 1;
 
 async function fetchData(method, url, type, body = null) {
     let data;
@@ -85,8 +85,8 @@ async function getAllUSGS(locations, newOverview, currOverview) {
     const mergedCalls = {};
     locations.forEach((location) => {
         const time = timeDifferenceInHours(
-            currOverview[location]?.reading_datetime,
-            newOverview[location]?.time,
+            currOverview?.[location]?.reading_datetime,
+            newOverview?.[location]?.time,
             MAX_PULL_HOURS
         );
 
