@@ -1,5 +1,5 @@
 const { getUSGSGOverview, getUHSLCOverview, getAllUSGS, getAllUHSLC } = require("../functions/api_calls.js");
-const { getHawaiiTimeNow } = require("../functions/time.js");
+const { printToLog, printTimerStart, printTimerEnd } = require("../functions/logs.js");
 const { getActiveLocations, getCurrentOverview, addToUpdateLogs, addGaugeReadings } = require("../database/queries.js");
 
 const cron = require("node-cron");
@@ -16,6 +16,8 @@ let ACTIVE_LOCATIONS = null;
 // */
 async function pullGaugeData(locations = null) {    
     try {
+        const timerId = printTimerStart(`Starting pullGaugeData`);
+    
         // if locs have not been initalized
         if (!ACTIVE_LOCATIONS) {
             const activeLocations = await getActiveLocations(['gauge_type']);
@@ -40,22 +42,19 @@ async function pullGaugeData(locations = null) {
         const usgsUpdates = createUpdateList(usgsDataOverview, currentData?.USGS);
         const uhslcUpdates = createUpdateList(uhslcDataOverview, currentData?.UHSLC);
 
-        console.log("usgsUpdates");
-        console.log(usgsUpdates);
-
         // gets all data for updated gauges
         const [usgsData, uhslcData] = await Promise.all([
             getAllUSGS(usgsUpdates, usgsDataOverview, currentData?.USGS),
             getAllUHSLC(uhslcUpdates, uhslcDataOverview, currentData?.UHSLC),
         ]);
 
-        console.log("usgsData");
-        console.log(usgsData);
         // add new data to gauge_readings and update_logs tables
         const [usgsLog, uhslcLog] = await Promise.all([
             addNewData(usgsData, usgsDataOverview),
             addNewData(uhslcData, uhslcDataOverview),
         ]);
+
+        printTimerEnd(timerId, `Finished pullGaugeData`);
     }
     catch (error) {
         console.error(error);
@@ -150,7 +149,7 @@ async function addNewData(newData, currentData) {
 
 // runs every 5 minutes
 cron.schedule("*/5 * * * *", async () => {
-    console.log("pulling new location data at " + getHawaiiTimeNow());
+    //console.log("pulling new location data at " + getHawaiiTimeNow());
     await pullGaugeData();
 });
 

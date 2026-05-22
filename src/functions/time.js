@@ -2,7 +2,18 @@
 // functions that deal with time
 // ──────────────────────────────────────────────────────────
 
+const cron = require("node-cron");
+
 const timers = {};
+
+cron.schedule('0 * * * *', () => {
+    const oneHourAgo = performance.now() - (60 * 60 * 1000);
+    Object.entries(timers).forEach(([id, start]) => {
+        if (start < oneHourAgo) {
+            delete timers[id];
+        }
+    });
+});
 
 function startTimer() {
     const id = crypto.randomUUID();

@@ -20,15 +20,27 @@ class ErrorMessage extends Error {
     }
 }
 
-function printToLog(message) {
-    const text = `[${getHawaiiTimeNow()}] ${message}`;
+function printToLog(message, indent = 0) {
+    const text = `[${getHawaiiTimeNow()}] ${getIndentString(indent)}${message}`;
     console.log(text);
 }
 
-function printTimerStart(message) {
+function printTimerStart(message = null, indent = 0) {
     const timer = startTimer();
-
+    if (message) {
+        printToLog(message, indent);
+    }
+    
+    return timer;
 }
+
+function printTimerEnd(timer, message = null, indent = 0) {
+    const elapsed = endTimer(timer);
+    if (message) {
+        printToLog(`${message} took ${Math.round(elapsed)}ms`, indent);
+    }
+}
+
 
 /**
 // getIndentString
@@ -51,5 +63,7 @@ function printErrorArray(message, errors, indent = 0) {
 module.exports = {
     ErrorMessage,
     printToLog,
+    printTimerStart,
+    printTimerEnd,
     printErrorArray
 };

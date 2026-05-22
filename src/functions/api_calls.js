@@ -1,5 +1,7 @@
 const { usgsAPIKey, usgsBaseUrl, usgsTableUrl, usgsGraphUrl } = require("../config/env");
 const { timeDifferenceInHours } = require("./time");
+const { printToLog, printTimerStart, printTimerEnd } = require("./logs.js");
+
 
 const MAX_RESPONSE_ENTRIES = 50000;
 const MAX_PULL_HOURS = 2 * 1;
@@ -60,6 +62,8 @@ async function getUSGSLocationInfo(locations) {
 // */
 async function getUSGSGOverview(locations) {
     const url = usgsTableUrl + locations
+    const count = locations.split(',').length;
+    const timerId = printTimerStart(`Fetching USGS-Overview: ${count} locations`, 1);
     const output = await fetchData("GET", url, "USGS");
 
     if (output?.features?.length > 0) {
@@ -72,10 +76,13 @@ async function getUSGSGOverview(locations) {
                 }
             ])
         );
+        printTimerEnd(timerId, `Recieved USGS-Overview`, 1);
 
         return featureMap;
     }
 
+    // clear timer
+    printTimerEnd(timerId);
     // TODO throw error
     return;
 }
@@ -135,12 +142,19 @@ async function getAllUSGS(locations, newOverview, currOverview) {
     });
 
     // makes call for each item
+    const timerId = printTimerStart(`Fetching USGS-Data: ${locations.length} locations in ${calls.length} calls`, 1);
     const results = await Promise.all(
         calls.map(({ time, ids }) => {
             const url = `${usgsGraphUrl}${time}H&monitoring_location_id=${ids}`;
-            return fetchData("GET", url, "USGS");
+            const callTimerId = printTimerStart();
+
+            return fetchData("GET", url, "USGS").then(result => {
+                printTimerEnd(callTimerId, `Received ${result?.numberReturned} items`, 2);
+                return result;
+            });
         })
     );
+    printTimerEnd(timerId, `Recieved USGS-Data`, 1);
 
     return extractFeatures(results);
 }

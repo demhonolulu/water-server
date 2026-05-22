@@ -101,7 +101,7 @@ async function addToUpdateLogs(updates) {
 
     // await bulkInsertToTable('gauge_readings', ['gauge_id', 'reading_datetime', 'val'], rows)
     //await addToTable('update_logs', ['gauge_id', 'reading_datetime', 'val'], [gauge_id, reading_datetime, val]);
-    console.log(updates);
+    //console.log(updates);
 }
 
 async function addGaugeReadings(updates) {
@@ -112,7 +112,7 @@ async function addGaugeReadings(updates) {
     // }));
 
     // await bulkInsertToTable('gauge_readings', ['gauge_id', 'reading_datetime', 'val'], rows)
-    console.log(updates.length);
+    //console.log(updates.length);
 }
 
 module.exports = {
