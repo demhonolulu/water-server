@@ -92,8 +92,32 @@ async function createGaugeTypeMap() {
     });
 }
 
+async function addToUpdateLogs(updates) {
+    // const rows = [{
+    //     gauge_id,
+    //     reading_datetime,
+    //     val
+    // }];
+
+    // await bulkInsertToTable('gauge_readings', ['gauge_id', 'reading_datetime', 'val'], rows)
+    //await addToTable('update_logs', ['gauge_id', 'reading_datetime', 'val'], [gauge_id, reading_datetime, val]);
+    console.log(updates);
+}
+
+async function addGaugeReadings(updates) {
+    // const rows = data.map(({ time, value }) => ({
+    //     gauge_id,
+    //     reading_datetime: time,
+    //     val: value
+    // }));
+
+    // await bulkInsertToTable('gauge_readings', ['gauge_id', 'reading_datetime', 'val'], rows)
+    console.log(updates.length);
+}
 
 module.exports = {
     getActiveLocations,
-    getCurrentOverview
+    getCurrentOverview,
+    addToUpdateLogs,
+    addGaugeReadings
 };

@@ -1,4 +1,8 @@
-const { usgsAPIKey, usgsBaseUrl, usgsTableUrl } = require("../config/env");
+const { usgsAPIKey, usgsBaseUrl, usgsTableUrl, usgsGraphUrl } = require("../config/env");
+const { timeDifferenceInHours } = require("./time");
+
+const MAX_RESPONSE_ENTRIES = 50000;
+const MAX_PULL_HOURS = 24 * 30;
 
 async function fetchData(method, url, type, body = null) {
     let data;
@@ -77,7 +81,91 @@ async function getUSGSGOverview(locations) {
 }
 
 async function getAllUSGS(locations, newOverview, currOverview) {
+    // groups gauges by time
+    const mergedCalls = {};
+    locations.forEach((location) => {
+        const time = timeDifferenceInHours(
+            currOverview[location]?.reading_datetime,
+            newOverview[location]?.time,
+            MAX_PULL_HOURS
+        );
 
+        const existingKey = Object.keys(mergedCalls)
+            .sort((a, b) => b - a)
+            .find(k => Math.abs(k - time) <= 3);
+
+        if (existingKey) {
+            mergedCalls[existingKey].push(location);
+        } else {
+            mergedCalls[time] = [location];
+        }
+    });
+
+    const calls = [];
+    // creates calls
+    Object.entries(mergedCalls).forEach(([timeKey, gaugeList]) => {
+        const pagination = [];
+        const responsePerEntry = timeKey * 13;
+
+        let currentCall = 0;
+        let currentEntries = MAX_RESPONSE_ENTRIES;
+        gaugeList.forEach(gaugeId => {
+            if ((currentEntries - responsePerEntry) > 0) {
+                currentEntries -= responsePerEntry;
+            }
+            else {
+                currentCall++;
+                currentEntries = MAX_RESPONSE_ENTRIES - responsePerEntry;
+            }
+
+            // add to array
+            if (pagination[currentCall]) {
+                pagination[currentCall] += `,${gaugeId}`;
+            }
+            else {
+                pagination[currentCall] = gaugeId;
+            }
+        });
+        pagination.forEach((gauges) => {
+            calls.push({
+                "time": timeKey,
+                "ids": gauges
+            });
+        })
+    });
+
+    // makes call for each item
+    const results = await Promise.all(
+        calls.map(({ time, ids }) => {
+            const url = `${usgsGraphUrl}${time}H&monitoring_location_id=${ids}`;
+            return fetchData("GET", url, "USGS");
+        })
+    );
+
+    return extractFeatures(results);
+}
+
+function extractFeatures(usgsResults) {
+    const output = {};
+
+    usgsResults.forEach(result => {
+        result.features.forEach(feature => {
+            const { monitoring_location_id, time, value } = feature.properties;
+
+            if (!output[monitoring_location_id]) output[monitoring_location_id] = [];
+            output[monitoring_location_id].push({
+                time,
+                value: parseFloat(value)
+            });
+        });
+    });
+
+    // sorts newest value first
+    Object.keys(output).forEach(id => {
+        output[id].sort((a, b) => new Date(b.time) - new Date(a.time));
+    });
+
+    return output;
 }
 
 // ── UHSLC ─────────────────────────────────────────────────
@@ -89,7 +177,9 @@ async function getUHSLCOverview(locations) {
 }
 
 async function getAllUHSLC(locations, newOverview, currOverview) {
-
+    locations.forEach((location) => {
+        
+    })
 }
 
 

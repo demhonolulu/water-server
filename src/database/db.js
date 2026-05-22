@@ -101,6 +101,7 @@ async function addToTable(table, columns, data) {
 //   @param {string}   table*     - 'update_logs'
 //   @param {string[]} columns*   - ['gauge_id', 'reading_datetime', 'val']
 //   @param {Object[]} dataArray* - [{ id: 'USGS-1', val: 1.2 }, { id: 'USGS-2', val: 3.4 }]
+//   TODO: add chunking, sql max param insert is 65535
 // */
 async function bulkInsertToTable(table, columns, dataArray) {
     const columnNames = columns.join(', ');
