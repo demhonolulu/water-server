@@ -5,7 +5,7 @@
 
 const config = require("../config/env");
 const columnsConfig = require("./columns.json");
-const { printErrorArray } = require("../functions/logs.js");
+const { ErrorMessage, printToLog, printTimerStart, printTimerEnd } = require("../functions/logs.js");
 
 const { Pool } = require("pg");
 
@@ -17,29 +17,9 @@ const pool = new Pool({
     database: config.db.database
 });
 
+const MAX_PARAMS = 65535;
+
 // ── SEARCH ────────────────────────────────────────────────
-/**
-// getFromTable
-//   getter for db records without suffix (ORDER BY, LIMIT, DISTINCT ON)
-//   @param {string} table* - Table name
-//   @param {string} whereClause - The SQL after WHERE (e.g., "active = $1")
-//   @param {any[]} params - Array of values for the placeholders
-// 
-async function getFromTable(table, whereClause = "1=1", params = []) {
-    const queryText = `
-        SELECT * FROM ${table}
-        WHERE ${whereClause};
-    `;
-
-    try {
-        const result = await pool.query(queryText, params);
-        return result.rows;
-    } catch (err) {
-        console.error(`Error in getFromTable [${table}]:`, err.message);
-        throw err;
-    }
-}*/
-
 /**
 // getFromTable
 //   getter for db records without suffix (ORDER BY, LIMIT, DISTINCT ON)
@@ -51,7 +31,7 @@ async function getFromTable(table, whereClause = "1=1", params = []) {
 // */
 async function getFromTable(table, params = [], whereClause = "1=1", distinct = null, order = null) {
     const distinctClause = distinct ? `DISTINCT ON (${distinct})` : '';
-    const orderClause = order ? `ORDER BY ${distinct}` : '';
+    const orderClause = order ? `ORDER BY ${order}` : '';
     const queryText = `
         SELECT ${distinctClause} * 
         FROM ${table}
@@ -70,65 +50,45 @@ async function getFromTable(table, params = [], whereClause = "1=1", distinct = 
 
 // ── ADD ───────────────────────────────────────────────────
 /**
-// addToTable
-//   add single item to table
-//   @param {string}    table*   - 'update_logs'
-//   @param {string[]}  columns* - ['gauge_id', 'reading_datetime', 'val']
-//   @param {any[]}     data*    - ['USGS-123', 3.62]
-// */
-async function addToTable(table, columns, data) {
-    const columnNames = columns.join(', ');
-    const placeholders = data.map((_, i) => `$${i + 1}`).join(', ');
-
-    const queryText = `
-        INSERT INTO ${table} (${columnNames})
-        VALUES (${placeholders})
-        RETURNING *;
-    `;
-
-    try {
-        const result = await pool.query(queryText, data);
-        return; 
-    } catch (err) {
-        console.error(`Database Error [Table: ${table}]:`, err.message);
-        throw err; 
-    }
-}
-
-/**
 // bulkInsertToTable
-//   bulk add items to postgres table
+//   bulk add items to postgres table, chunks them to meet 65k param cap
 //   @param {string}   table*     - 'update_logs'
 //   @param {string[]} columns*   - ['gauge_id', 'reading_datetime', 'val']
 //   @param {Object[]} dataArray* - [{ id: 'USGS-1', val: 1.2 }, { id: 'USGS-2', val: 3.4 }]
-//   TODO: add chunking, sql max param insert is 65535
+//   TODO: validate rows, remove bad rows
 // */
 async function bulkInsertToTable(table, columns, dataArray) {
-    const columnNames = columns.join(', ');
-    const values = [];
-    const valuePlaceholders = [];
+    // group data into chunks 
+    const chunkSize = Math.floor(MAX_PARAMS / columns.length);
+    const chunks = [];
+    for (let i = 0; i < dataArray.length; i += chunkSize) {
+        chunks.push(dataArray.slice(i, i + chunkSize));
+    }
 
-    // loop through the data to create ($1, $2, $3), ($4, $5, $6) etc.
-    dataArray.forEach((row, rowIndex) => {
-        const rowPlaceholders = columns.map((col, colIndex) => {
-            values.push(row[col]);
-            return `$${values.length}`;
+    for (const chunk of chunks) {
+        const columnNames = columns.join(', ');
+        const values = [];
+        const valuePlaceholders = [];
+
+        chunk.forEach((row) => {
+            const rowPlaceholders = columns.map((col) => {
+                values.push(row[col]);
+                return `$${values.length}`;
+            });
+            valuePlaceholders.push(`(${rowPlaceholders.join(', ')})`);
         });
-        valuePlaceholders.push(`(${rowPlaceholders.join(', ')})`);
-    });
 
-    const queryText = `
-        INSERT INTO ${table} (${columnNames})
-        VALUES ${valuePlaceholders.join(', ')}
-    `;
+        const queryText = `
+            INSERT INTO ${table} (${columnNames})
+            VALUES ${valuePlaceholders.join(', ')}
+        `;
 
-    try {
-        const result = await pool.query(queryText, values);
-        console.log(`Successfully added ${result.rowCount} new rows.`);
-        return result.rows;
-    } catch (err) {
-        console.error("Bulk insert failed:", err.message);
-        throw err;
+        try {
+            const result = await pool.query(queryText, values);
+        } catch (err) {
+            console.error("Bulk insert failed:", err.message);
+            throw err;
+        }
     }
 }
 
@@ -310,7 +270,6 @@ function validateBulk(table, columns, dataArray) {
 module.exports = {
     pool,
     getFromTable,
-    addToTable,
     bulkInsertToTable,
     validateBulk,
     validateColumns

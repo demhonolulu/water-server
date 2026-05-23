@@ -2,8 +2,8 @@
 // public functions that read or modify data in the tables
 // ──────────────────────────────────────────────────────────
 
-const { pool, getFromTable, addToTable, bulkInsertToTable, validateColumns } = require("./db.js");
-const { ErrorMessage } = require("../functions/logs.js");
+const { pool, getFromTable, bulkInsertToTable, validateColumns } = require("./db.js");
+const { ErrorMessage, printToLog, printTimerStart, printTimerEnd } = require("../functions/logs.js");
 
 // create mapping between gauge_id and gauge_type for quick lookup
 const gaugeTypeMap = {};
@@ -93,26 +93,15 @@ async function createGaugeTypeMap() {
 }
 
 async function addToUpdateLogs(updates) {
-    // const rows = [{
-    //     gauge_id,
-    //     reading_datetime,
-    //     val
-    // }];
-
-    // await bulkInsertToTable('gauge_readings', ['gauge_id', 'reading_datetime', 'val'], rows)
-    //await addToTable('update_logs', ['gauge_id', 'reading_datetime', 'val'], [gauge_id, reading_datetime, val]);
-    //console.log(updates);
+    const timerId = printTimerStart();
+    await bulkInsertToTable('update_logs', ['gauge_id', 'reading_datetime', 'val'], updates);
+    printTimerEnd(timerId, `[->] Update_Logs: ${updates.length} rows`, 1, false);
 }
 
 async function addGaugeReadings(updates) {
-    // const rows = data.map(({ time, value }) => ({
-    //     gauge_id,
-    //     reading_datetime: time,
-    //     val: value
-    // }));
-
-    // await bulkInsertToTable('gauge_readings', ['gauge_id', 'reading_datetime', 'val'], rows)
-    //console.log(updates.length);
+    const timerId = printTimerStart();
+    await bulkInsertToTable('gauge_readings', ['gauge_id', 'reading_datetime', 'val'], updates)
+    printTimerEnd(timerId, `[->] Gauge_Readings: ${updates.length} rows`, 1);
 }
 
 module.exports = {

@@ -91,24 +91,6 @@ function createUpdateList(newData, currentData) {
 async function addNewData(newData, currentData) {
     if (!newData) return;
 
-    // Object.entries(newData).forEach(([location, data]) => {
-    //     if (!data || !data.length) return;
-
-    //     // add first entry to update logs table
-    //     const lastestReading = data[0];
-    //     addToUpdateLogs(location, lastestReading.time, lastestReading.value);
-
-    //     // add new entries to gauge readings table
-    //     const currReading = currentData[location]?.reading_datetime 
-    //         ? new Date(currentData[location].reading_datetime) 
-    //         : null;
-
-    //     const newEntries = currReading
-    //         ? data.filter(entry => new Date(entry.time) > currReading)
-    //         : data;
-        
-    //     addGaugeReadings(location, newEntries);
-    // });
     const updateLogs = [];
     const gaugeReadings = [];
 

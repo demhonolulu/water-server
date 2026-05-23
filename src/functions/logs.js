@@ -20,23 +20,25 @@ class ErrorMessage extends Error {
     }
 }
 
-function printToLog(message, indent = 0) {
+function printToLog(message, indent = 0, visible = true) {
     const text = `[${getHawaiiTimeNow()}] ${getIndentString(indent)}${message}`;
-    console.log(text);
+    if (visible) {
+        console.log(text);
+    }
 }
 
-function printTimerStart(message = null, indent = 0) {
+function printTimerStart(message = null, indent = 0, visible = true) {
     const timer = startTimer();
-    if (message) {
+    if (message && visible) {
         printToLog(message, indent);
     }
     
     return timer;
 }
 
-function printTimerEnd(timer, message = null, indent = 0) {
+function printTimerEnd(timer, message = null, indent = 0, visible = true) {
     const elapsed = endTimer(timer);
-    if (message) {
+    if (message && visible) {
         printToLog(`${message} took ${Math.round(elapsed)}ms`, indent);
     }
 }

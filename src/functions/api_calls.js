@@ -4,7 +4,7 @@ const { printToLog, printTimerStart, printTimerEnd } = require("./logs.js");
 
 
 const MAX_RESPONSE_ENTRIES = 50000;
-const MAX_PULL_HOURS = 2 * 1;
+const MAX_PULL_HOURS = 24 * 30;
 
 async function fetchData(method, url, type, body = null) {
     let data;
@@ -63,7 +63,7 @@ async function getUSGSLocationInfo(locations) {
 async function getUSGSGOverview(locations) {
     const url = usgsTableUrl + locations
     const count = locations.split(',').length;
-    const timerId = printTimerStart(`Fetching USGS-Overview: ${count} locations`, 1);
+    const timerId = printTimerStart(`(->) USGS-Overview: ${count} locations`, 1, false);
     const output = await fetchData("GET", url, "USGS");
 
     if (output?.features?.length > 0) {
@@ -76,7 +76,7 @@ async function getUSGSGOverview(locations) {
                 }
             ])
         );
-        printTimerEnd(timerId, `Recieved USGS-Overview`, 1);
+        printTimerEnd(timerId, `(<-) USGS-Overview`, 1, false);
 
         return featureMap;
     }
@@ -142,19 +142,19 @@ async function getAllUSGS(locations, newOverview, currOverview) {
     });
 
     // makes call for each item
-    const timerId = printTimerStart(`Fetching USGS-Data: ${locations.length} locations in ${calls.length} calls`, 1);
+    const timerId = printTimerStart(`(->) USGS-Data: ${locations.length} locations in ${calls.length} calls`, 1);
     const results = await Promise.all(
         calls.map(({ time, ids }) => {
             const url = `${usgsGraphUrl}${time}H&monitoring_location_id=${ids}`;
             const callTimerId = printTimerStart();
 
             return fetchData("GET", url, "USGS").then(result => {
-                printTimerEnd(callTimerId, `Received ${result?.numberReturned} items`, 2);
+                printTimerEnd(callTimerId, `(<-) ${result?.numberReturned} items`, 2);
                 return result;
             });
         })
     );
-    printTimerEnd(timerId, `Recieved USGS-Data`, 1);
+    printTimerEnd(timerId, `(<-) USGS-Data`, 1);
 
     return extractFeatures(results);
 }
