@@ -50,8 +50,8 @@ async function pullGaugeData(locations = null) {
 
         // add new data to gauge_readings and update_logs tables
         const [usgsLog, uhslcLog] = await Promise.all([
-            addNewData(usgsData, usgsDataOverview),
-            addNewData(uhslcData, uhslcDataOverview),
+            addNewData(usgsData, currentData?.USGS),
+            addNewData(uhslcData, currentData?.UHSLC),
         ]);
 
         printTimerEnd(timerId, `Finished pullGaugeData`);
@@ -59,8 +59,6 @@ async function pullGaugeData(locations = null) {
     catch (error) {
         console.error(error);
     }
-
-    //console.log(`⏰ Updating locations: Started at [${getHawaiiTimeNow()}]`);
     return;
 }
 
@@ -106,8 +104,8 @@ async function addNewData(newData, currentData) {
         });
 
         // filter new entries
-        const currReading = currentData[location]?.reading_datetime 
-            ? new Date(currentData[location].reading_datetime) 
+        const currReading = currentData?.[location]?.time 
+            ? new Date(currentData[location].time) 
             : null;
 
         const newEntries = currReading

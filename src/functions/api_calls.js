@@ -1,5 +1,6 @@
-const { usgsAPIKey, usgsBaseUrl, usgsTableUrl, usgsGraphUrl } = require("../config/env");
-const { timeDifferenceInHours } = require("./time");
+const { usgsAPIKey, usgsBaseUrl, usgsTableUrl, usgsGraphUrl, uhslcUrl } = require("../config/env");
+const { uhslcOverviewBody, uhslcDataBody } = require("./uhslc.js");
+const { timeDifferenceInHours } = require("./time.js");
 const { printToLog, printTimerStart, printTimerEnd } = require("./logs.js");
 
 
@@ -186,7 +187,7 @@ function extractFeatures(usgsResults) {
 
 // pulls most recent data for graph every 5m
 async function getUHSLCOverview(locations) {
-
+    //console.log(locations);
     return;
 }
 
