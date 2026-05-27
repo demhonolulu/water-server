@@ -1,6 +1,6 @@
 const { usgsAPIKey, usgsBaseUrl, usgsTableUrl, usgsGraphUrl, uhslcUrl } = require("../config/env");
 const { uhslcOverviewBody, uhslcDataBody } = require("./uhslc.js");
-const { timeDifferenceInHours } = require("./time.js");
+const { timeDifferenceInHours, getUHSLCTimeNow, getUHSLCDate, getUHSLCDataDates } = require("./time.js");
 const { printToLog, printTimerStart, printTimerEnd } = require("./logs.js");
 
 
@@ -12,6 +12,7 @@ async function fetchData(method, url, type, body = null) {
     try {
         const headers = {
             "Content-Type": "application/json",
+            "Accept": "application/json",
         };
         if (type === "USGS") {
             headers["Authorization"] = `${usgsAPIKey}`;
@@ -23,7 +24,7 @@ async function fetchData(method, url, type, body = null) {
         };
 
         if (body !== null) {
-            options.body = JSON.stringify(body);
+            options.body = typeof body === 'string' ? body : JSON.stringify(body);
         }
 
         const response = await fetch(url, options);
@@ -156,7 +157,7 @@ async function getAllUSGS(locations, newOverview, currOverview) {
         })
     );
     printTimerEnd(timerId, `(<-) USGS-Data`, 1);
-
+    
     return extractFeatures(results);
 }
 
@@ -187,14 +188,78 @@ function extractFeatures(usgsResults) {
 
 // pulls most recent data for graph every 5m
 async function getUHSLCOverview(locations) {
-    //console.log(locations);
+    const url = uhslcUrl;
+    const locs = locations.split(',');
+    const timerId = printTimerStart(`(->) UHSLC-Overview: ${locs.length} locations`, 1, true);
+    const timeNow = uhslcOverviewBody(getUHSLCTimeNow());
+    const output = await fetchData("POST", url, "UHSLC", timeNow);
+
+    if (output?.response?.['station-table']?.data?.length > 0) {
+        const dataMap = Object.fromEntries(
+            output.response["station-table"].data
+                .filter(item => locs.includes(item.id))
+                .map(item => [
+                    item.id,
+                    {
+                        value: parseFloat(extractUHSLCData(item["REPORTED LEVEL (ft)"])),
+                        time: getUHSLCDate(extractUHSLCData(item["DATA LAST REPORTED (HST)"]))
+                    }
+                ])
+        );
+        printTimerEnd(timerId, `(<-) UHSLC-Overview`, 1, true);
+
+        return dataMap;
+    }
+
+    // clear timer
+    printTimerEnd(timerId);
+    // TODO throw error
     return;
 }
 
+function extractUHSLCData(htmlString) { 
+    return htmlString.replace(/<[^>]*>/g, '').trim(); 
+}
+
 async function getAllUHSLC(locations, newOverview, currOverview) {
+    return null;
+    // calculate start and end time for each call
+    const calls = [];
     locations.forEach((location) => {
-        
-    })
+        const time = timeDifferenceInHours(
+            currOverview?.[location]?.reading_datetime,
+            newOverview?.[location]?.time,
+            MAX_PULL_HOURS
+        ); 
+        const args = getUHSLCDataDates(time);
+        calls.push({
+            start: args.startDate,
+            end: args.endDate,
+            id: location
+        });
+    });
+
+    // makes call for each item
+    const timerId = printTimerStart(`(->) UHSLC-Data: ${locations.length} locations`, 1);
+    const results = await Promise.all(
+        calls.map(({ start, end, id }) => {
+            const url = uhslcUrl;
+            const callTimerId = printTimerStart();
+
+            return fetchData("POST", url, "UHSLC", uhslcDataBody(start, end, id)).then(result => {
+                printTimerEnd(callTimerId, `(<-) items`, 2);
+                return result;
+            });
+        })
+    );
+    printTimerEnd(timerId, `(<-) UHSLC-Data`, 1);
+
+    return processUHSLCData(results);
+}
+
+function processUHSLCData(results) {
+    if (!results?.response?.['fig-water-level']?.figure?.data?.length) return;
+    const data = results.response['fig-water-level'].figure.data.find(d => d.name == "Water level");
 }
 
 

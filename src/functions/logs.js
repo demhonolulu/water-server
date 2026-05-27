@@ -4,6 +4,8 @@
 
 const { getHawaiiTimeNow, startTimer, endTimer } = require("./time.js");
 
+const fs = require('fs');
+
 /**
 // ErrorMessage
 //   custom error class that formats an array of errors into a readable message.
@@ -25,6 +27,8 @@ function printToLog(message, indent = 0, visible = true) {
     if (visible) {
         console.log(text);
     }
+
+    return text;
 }
 
 function printTimerStart(message = null, indent = 0, visible = true) {
@@ -41,6 +45,15 @@ function printTimerEnd(timer, message = null, indent = 0, visible = true) {
     if (message && visible) {
         printToLog(`${message} took ${Math.round(elapsed)}ms`, indent);
     }
+}
+
+function addToOutputLog(message) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const filename = `${year}-${month}-server-logs.txt`;
+
+    fs.appendFileSync(`../../logs/${filename}`, message + '\n');
 }
 
 
@@ -67,5 +80,6 @@ module.exports = {
     printToLog,
     printTimerStart,
     printTimerEnd,
+    addToOutputLog,
     printErrorArray
 };

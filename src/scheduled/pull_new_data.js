@@ -41,6 +41,7 @@ async function pullGaugeData(locations = null) {
         // gets list of gauges that have updated
         const usgsUpdates = createUpdateList(usgsDataOverview, currentData?.USGS);
         const uhslcUpdates = createUpdateList(uhslcDataOverview, currentData?.UHSLC);
+        console.log(uhslcUpdates);
 
         // gets all data for updated gauges
         const [usgsData, uhslcData] = await Promise.all([
@@ -51,7 +52,7 @@ async function pullGaugeData(locations = null) {
         // add new data to gauge_readings and update_logs tables
         const [usgsLog, uhslcLog] = await Promise.all([
             addNewData(usgsData, currentData?.USGS),
-            addNewData(uhslcData, currentData?.UHSLC),
+            addNewData(null, currentData?.UHSLC),
         ]);
 
         printTimerEnd(timerId, `Finished pullGaugeData`);
