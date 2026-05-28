@@ -24,8 +24,8 @@ async function pullGaugeData(locations = null) {
     try {
         const timerId = printTimerStart(`Starting pullGaugeData`, 0, false);
 
-        const ACTIVE_LOCATIONS = await getActiveLocations(['gauge_type']);
-        
+        const ACTIVE_LOCATIONS = await getActiveLocations();
+
         // gets most recent data point
         const [usgsDataOverview, uhslcDataOverview, currentData] = await Promise.all([
             getUSGSGOverview(ACTIVE_LOCATIONS['USGS']),
