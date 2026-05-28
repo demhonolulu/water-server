@@ -1,11 +1,12 @@
 const { getUSGSGOverview, getUHSLCOverview, getAllUSGS, getAllUHSLC } = require("../functions/api_calls.js");
 const { printToLog, printTimerStart, printTimerEnd, addToOutputLog } = require("../functions/logs.js");
-const { getActiveLocations, getCurrentOverview, addToUpdateLogs, addGaugeReadings } = require("../database/queries.js");
+const { getCurrentOverview, addToUpdateLogs, addGaugeReadings } = require("../database/queries.js");
+const { getActiveLocations } = require("../api/get_active_locations.js");
 
 const cron = require("node-cron");
 const { bulkInsertToTable } = require("../database/db.js");
 
-let ACTIVE_LOCATIONS = null; // global object with comma seperated string of active gauges grouped by gauge_type
+//let ACTIVE_LOCATIONS = null; // global object with comma seperated string of active gauges grouped by gauge_type
 
 // every 5 minutes, call pullGaugeData
 cron.schedule("*/5 * * * *", async () => {
@@ -22,20 +23,9 @@ cron.schedule("*/5 * * * *", async () => {
 async function pullGaugeData(locations = null) {    
     try {
         const timerId = printTimerStart(`Starting pullGaugeData`, 0, false);
-    
-        // if locs have not been initalized
-        if (!ACTIVE_LOCATIONS) {
-            const activeLocations = await getActiveLocations(['gauge_type']);
-            ACTIVE_LOCATIONS = {};
 
-            // maps into comma seperated list by gauge type
-            for (const [gaugeType, locationsArray] of Object.entries(activeLocations)) {
-                ACTIVE_LOCATIONS[gaugeType] = locationsArray
-                    .map(loc => loc.gauge_id)
-                    .join(',');
-            }
-        }
-
+        const ACTIVE_LOCATIONS = await getActiveLocations(['gauge_type']);
+        
         // gets most recent data point
         const [usgsDataOverview, uhslcDataOverview, currentData] = await Promise.all([
             getUSGSGOverview(ACTIVE_LOCATIONS['USGS']),

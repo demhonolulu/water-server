@@ -4,6 +4,9 @@ const cron = require("node-cron");
 const { updateLocations } = require("./src/scheduled/update_locations");
 const { pullGaugeData } = require("./src/scheduled/pull_new_data");
 
+// apis
+const { getActiveLocations } = require('./src/api/get_active_locations');
+
 const app = express();
 const PORT = 3000;
 
@@ -40,6 +43,15 @@ app.get('/update-locations', async (req, res) => {
         await pullGaugeData(); 
         
         res.status(200).send("Task completed successfully!");
+    } catch (error) {
+        res.status(500).send("Task failed: " + error.message);
+    }
+});
+
+app.get('/get-active-locations', async (req, res) => {
+    try {
+        const locations = await getActiveLocations();
+        res.status(200).json(locations);
     } catch (error) {
         res.status(500).send("Task failed: " + error.message);
     }

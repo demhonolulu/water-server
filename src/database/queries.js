@@ -34,7 +34,7 @@ function groupLocations(items, keys) {
 //   @param {string[]} groupBy - ['gauge_id', 'area']
 //   @returns {Object} - {"USGS":["NORTH-SHORE":[{"gauge_id"}]], "UHSLC": []}
 // */
-async function getActiveLocations(groupBy = null) {
+async function getActiveLocationsDB(groupBy = null) {
     if (groupBy) {
         const valid = validateColumns('gauge_locations', groupBy);
         if (!valid?.valid) {
@@ -101,7 +101,7 @@ async function addGaugeReadings(updates) {
 }
 
 module.exports = {
-    getActiveLocations,
+    getActiveLocationsDB,
     getCurrentOverview,
     addToUpdateLogs,
     addGaugeReadings
