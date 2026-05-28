@@ -1,7 +1,3 @@
-// ── QUERIES ───────────────────────────────────────────────
-// public functions that read or modify data in the tables
-// ──────────────────────────────────────────────────────────
-
 const { pool, getFromTable, bulkInsertToTable, validateColumns } = require("./db.js");
 const { ErrorMessage, printToLog, printTimerStart, printTimerEnd } = require("../functions/logs.js");
 
@@ -101,7 +97,7 @@ async function addToUpdateLogs(updates) {
 async function addGaugeReadings(updates) {
     const timerId = printTimerStart();
     await bulkInsertToTable('gauge_readings', ['gauge_id', 'reading_datetime', 'val'], updates)
-    printTimerEnd(timerId, `[->] Gauge_Readings: ${updates.length} rows`, 1);
+    printTimerEnd(timerId, `[->] Gauge_Readings: ${updates.length} rows`, 1, false);
 }
 
 module.exports = {

@@ -1,22 +1,27 @@
 const { getUSGSGOverview, getUHSLCOverview, getAllUSGS, getAllUHSLC } = require("../functions/api_calls.js");
-const { printToLog, printTimerStart, printTimerEnd } = require("../functions/logs.js");
+const { printToLog, printTimerStart, printTimerEnd, addToOutputLog } = require("../functions/logs.js");
 const { getActiveLocations, getCurrentOverview, addToUpdateLogs, addGaugeReadings } = require("../database/queries.js");
 
 const cron = require("node-cron");
 const { bulkInsertToTable } = require("../database/db.js");
 
-// global object with comma seperated string of active gauges grouped by gauge_type
-let ACTIVE_LOCATIONS = null;
+let ACTIVE_LOCATIONS = null; // global object with comma seperated string of active gauges grouped by gauge_type
+
+// every 5 minutes, call pullGaugeData
+cron.schedule("*/5 * * * *", async () => {
+    await pullGaugeData();
+});
 
 /**
 // pullGaugeData
-//   calls usgs for latestest entry of each active gauge for gauge table. if entry is new, call again for full data and store
-//   @param {string} locations - string of comma seperated list of ids
-//   @returns {Object} -
+//   calls usgs and uhslc for latest entry of each active gauge for gauge table. 
+//   if entry is new, call again for full data and store data in gauge_readings and
+//   pull results in update_logs
+//   @param {string} locations - "gauge_id,USGS-16208000" string, comma seperated list of ids
 // */
 async function pullGaugeData(locations = null) {    
     try {
-        const timerId = printTimerStart(`Starting pullGaugeData`);
+        const timerId = printTimerStart(`Starting pullGaugeData`, 0, false);
     
         // if locs have not been initalized
         if (!ACTIVE_LOCATIONS) {
@@ -41,7 +46,6 @@ async function pullGaugeData(locations = null) {
         // gets list of gauges that have updated
         const usgsUpdates = createUpdateList(usgsDataOverview, currentData?.USGS);
         const uhslcUpdates = createUpdateList(uhslcDataOverview, currentData?.UHSLC);
-        console.log(uhslcUpdates);
 
         // gets all data for updated gauges
         const [usgsData, uhslcData] = await Promise.all([
@@ -52,10 +56,16 @@ async function pullGaugeData(locations = null) {
         // add new data to gauge_readings and update_logs tables
         const [usgsLog, uhslcLog] = await Promise.all([
             addNewData(usgsData, currentData?.USGS),
-            addNewData(null, currentData?.UHSLC),
+            addNewData(uhslcData, currentData?.UHSLC),
         ]);
 
-        printTimerEnd(timerId, `Finished pullGaugeData`);
+        // print results
+        const gaugeCountUSGS = Object.keys(usgsData).length;
+        const gaugeCountUHSLC = Object.keys(uhslcData).length;
+        const totalItemsUSGS = Object.values(usgsData).reduce((sum, arr) => sum + arr.length, 0);
+        const totalItemsUHSLC = Object.values(uhslcData).reduce((sum, arr) => sum + arr.length, 0);
+        const elapsed = printTimerEnd(timerId, `Finished pullGaugeData`, 0, false);
+        addToOutputLog(`Pulled ${totalItemsUSGS} points from ${gaugeCountUSGS} USGS gauges and ${totalItemsUHSLC} points from ${gaugeCountUHSLC} UHSLC gauges in ${elapsed}ms`);
     }
     catch (error) {
         console.error(error);
@@ -63,6 +73,13 @@ async function pullGaugeData(locations = null) {
     return;
 }
 
+/**
+// createUpdateList
+//   compares existing data with newly retrieved data to find which gauges had an update
+//   @param {Object} newData - {'gauge_id': {'value': %f,'time': datetimez}} fetch format
+//   @param {Object} currentData - {'gauge_id': {'id': %d, 'gauge_id': %s, 'fetch_datetime': datetimez, 'reading_datetime': datetimez, 'val': %f}} return from table format
+//   @returns {Array[Strings]} - ['gauge_id', 'USGS-16208000']
+// */
 function createUpdateList(newData, currentData) {
     const updateList = [];
     if (!newData) return updateList;
@@ -87,9 +104,15 @@ function createUpdateList(newData, currentData) {
     return updateList;
 }
 
+/**
+// addNewData
+//   filters data to only add data that doesnt exist in tables. groups them all into
+//   a single call to add to tables.
+//   @param {Object} newData - {'gauge_id': [{'time': datetimez, 'value': %f}]}
+//   @param {Object} currentData - {'gauge_id': {'id': %d, 'gauge_id': %s, 'fetch_datetime': datetimez, 'reading_datetime': datetimez, 'val': %f}} return from table format
+// */
 async function addNewData(newData, currentData) {
     if (!newData) return;
-
     const updateLogs = [];
     const gaugeReadings = [];
 
@@ -127,12 +150,6 @@ async function addNewData(newData, currentData) {
         addGaugeReadings(gaugeReadings)
     ]);
 }
-
-// runs every 5 minutes
-cron.schedule("*/5 * * * *", async () => {
-    //console.log("pulling new location data at " + getHawaiiTimeNow());
-    await pullGaugeData();
-});
 
 module.exports = {
     pullGaugeData

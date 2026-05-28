@@ -5,6 +5,7 @@
 const { getHawaiiTimeNow, startTimer, endTimer } = require("./time.js");
 
 const fs = require('fs');
+const path = require('path');
 
 /**
 // ErrorMessage
@@ -42,18 +43,24 @@ function printTimerStart(message = null, indent = 0, visible = true) {
 
 function printTimerEnd(timer, message = null, indent = 0, visible = true) {
     const elapsed = endTimer(timer);
+    const elapsedRounded = Math.round(elapsed);
     if (message && visible) {
-        printToLog(`${message} took ${Math.round(elapsed)}ms`, indent);
+        printToLog(`${message} took ${elapsedRounded}ms`, indent);
     }
+
+    return elapsedRounded;
 }
 
 function addToOutputLog(message) {
+    const text = printToLog(message);
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const filename = `${year}-${month}-server-logs.txt`;
 
-    fs.appendFileSync(`../../logs/${filename}`, message + '\n');
+    const logsDir = path.join(process.cwd(), 'logs');
+    fs.mkdirSync(logsDir, { recursive: true });
+    fs.appendFileSync(path.join(logsDir, filename), text + '\n');
 }
 
 

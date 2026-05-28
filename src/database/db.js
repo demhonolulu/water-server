@@ -1,8 +1,3 @@
-// ── DB ────────────────────────────────────────────────────
-// functions that directly touch the database tables
-// should not be called directly other than by queries.js
-// ──────────────────────────────────────────────────────────
-
 const config = require("../config/env");
 const columnsConfig = require("./columns.json");
 const { ErrorMessage, printToLog, printTimerStart, printTimerEnd } = require("../functions/logs.js");
@@ -23,11 +18,11 @@ const MAX_PARAMS = 65535;
 /**
 // getFromTable
 //   getter for db records without suffix (ORDER BY, LIMIT, DISTINCT ON)
-//   @param {string} table* - Table name
-//   @param {any[]} params - Array of values for the placeholders
-//   @param {string} whereClause - WHERE 'whereClause'
-//   @param {string} distinct - DISTINCT ON (distinct)
-//   @param {string} order - ORDER BY 'order'
+//   @param {string} table - Table name
+//   @param {any[]} params* - Array of values for the placeholders
+//   @param {string} whereClause* - WHERE 'whereClause'
+//   @param {string} distinct* - DISTINCT ON (distinct)
+//   @param {string} order* - ORDER BY 'order'
 // */
 async function getFromTable(table, params = [], whereClause = "1=1", distinct = null, order = null) {
     const distinctClause = distinct ? `DISTINCT ON (${distinct})` : '';
@@ -52,9 +47,9 @@ async function getFromTable(table, params = [], whereClause = "1=1", distinct = 
 /**
 // bulkInsertToTable
 //   bulk add items to postgres table, chunks them to meet 65k param cap
-//   @param {string}   table*     - 'update_logs'
-//   @param {string[]} columns*   - ['gauge_id', 'reading_datetime', 'val']
-//   @param {Object[]} dataArray* - [{ id: 'USGS-1', val: 1.2 }, { id: 'USGS-2', val: 3.4 }]
+//   @param {string}   table     - 'update_logs'
+//   @param {string[]} columns   - ['gauge_id', 'reading_datetime', 'val']
+//   @param {Object[]} dataArray - [{ id: 'USGS-1', val: 1.2 }, { id: 'USGS-2', val: 3.4 }]
 //   TODO: validate rows, remove bad rows
 // */
 async function bulkInsertToTable(table, columns, dataArray) {
@@ -98,11 +93,7 @@ async function bulkInsertToTable(table, columns, dataArray) {
 //   validate table and with column names
 //   @param {string} table
 //   @param {string[]} columns
-//   
-//   @returns {{
-//     valid: boolean,
-//     errors: Object[]
-//   }}
+//   @returns {{ valid: boolean, errors: Object[]}}
 //  */
 function validateColumns(table, columns) {
     const errors = [];
@@ -138,12 +129,7 @@ function validateColumns(table, columns) {
 //   @param {string} table
 //   @param {string[]} columns
 //   @param {Object[]} dataArray
-//   
-//   @returns {{
-//     valid: boolean,
-//     errors: Object[],
-//     sanitizedRows: Object[]
-//   }}
+//   @returns {{ valid: boolean, errors: Object[], sanitizedRows: Object[] }}
 //  */
 function validateBulk(table, columns, dataArray) {
     const errors = [];

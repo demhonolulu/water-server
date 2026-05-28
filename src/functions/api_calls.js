@@ -3,10 +3,17 @@ const { uhslcOverviewBody, uhslcDataBody } = require("./uhslc.js");
 const { timeDifferenceInHours, getUHSLCTimeNow, getUHSLCDate, getUHSLCDataDates } = require("./time.js");
 const { printToLog, printTimerStart, printTimerEnd } = require("./logs.js");
 
-
 const MAX_RESPONSE_ENTRIES = 50000;
 const MAX_PULL_HOURS = 24 * 30;
 
+/**
+// fetchData
+//   fetch wrapper that handles calling and errors
+//   @param {String} method - 'POST', 'GET', etc
+//   @param {String} url - api url
+//   @param {String} type - 'USGS' or 'UHSLC'
+//   @param {String} body - json body
+// */
 async function fetchData(method, url, type, body = null) {
     let data;
     try {
@@ -43,7 +50,11 @@ async function fetchData(method, url, type, body = null) {
 
 // ── USGS ──────────────────────────────────────────────────
 
-// calls to usgs for updated location data
+/**
+// getUSGSLocationInfo
+//   calls to usgs for updated location data
+//   @param {string} locations - "gauge_id,USGS-16208000" string, comma seperated list of ids
+// */
 async function getUSGSLocationInfo(locations) {
     const locationsURL = "monitoring-locations/items?f=json&lang=en-US&limit=50000&skipGeometry=false&offset=0&id=";
     const url = usgsBaseUrl + locationsURL + locations;
@@ -57,10 +68,10 @@ async function getUSGSLocationInfo(locations) {
 }
 
 /**
-// getUSGSGaugeData
-//   calls usgs for latest entry of each active gauge for gauge table
-//   @param {string} locations - string of comma seperated list of ids
-//   @returns {Object} - {'gauge-id': {'value': 1, 'time': ''}}
+// getUSGSGOverview
+//   calls to usgs for latest entry of each active gauge for gauge overview
+//   @param {string} locations - "gauge_id,USGS-16208000" string, comma seperated list of ids
+//   @returns {Object} - {'gauge_id': {'value': %f,'time': datetimez}} fetch format
 // */
 async function getUSGSGOverview(locations) {
     const url = usgsTableUrl + locations
@@ -89,6 +100,16 @@ async function getUSGSGOverview(locations) {
     return;
 }
 
+/**
+// getAllUSGS
+//   gets all data for usgs gauge locations. finds time difference between table entry and new data.
+//   groups locations that are within +/- 1 hour into calls. Then checks if calls exceed max entry
+//   count for usgs, if so split them into multiple calls. Batch calls usgs for data and runs extract
+//   @param {Array[String]} locations - ['gauge_id']
+//   @param {Object} newData - {'gauge_id': {'value': %f,'time': datetimez}} fetch format
+//   @param {Object} currentData - {'gauge_id': {'id': %d, 'gauge_id': %s, 'fetch_datetime': datetimez, 'reading_datetime': datetimez, 'val': %f}} return from table format
+//   @returns {Object} - {'gauge_id': {'response':{}}}
+// */
 async function getAllUSGS(locations, newOverview, currOverview) {
     // groups gauges by time
     const mergedCalls = {};
@@ -144,23 +165,29 @@ async function getAllUSGS(locations, newOverview, currOverview) {
     });
 
     // makes call for each item
-    const timerId = printTimerStart(`(->) USGS-Data: ${locations.length} locations in ${calls.length} calls`, 1);
+    const timerId = printTimerStart(`(->) USGS-Data: ${locations.length} locations in ${calls.length} calls`, 1, false);
     const results = await Promise.all(
         calls.map(({ time, ids }) => {
             const url = `${usgsGraphUrl}${time}H&monitoring_location_id=${ids}`;
             const callTimerId = printTimerStart();
 
             return fetchData("GET", url, "USGS").then(result => {
-                printTimerEnd(callTimerId, `(<-) ${result?.numberReturned} items`, 2);
+                printTimerEnd(callTimerId, `(<-) USGS: ${result?.numberReturned} items`, 2, false);
                 return result;
             });
         })
     );
-    printTimerEnd(timerId, `(<-) USGS-Data`, 1);
+    printTimerEnd(timerId, `(<-) USGS-Data`, 1, false);
     
     return extractFeatures(results);
 }
 
+/**
+// extractFeatures
+//   converts raw usgs data reponse to form that addNewData can process 
+//   @param {Object} usgsResults - {'features': {}}
+//   @returns {Object} - {'gauge_id': [{'time': datetimez, 'value': %f}]}
+// */
 function extractFeatures(usgsResults) {
     const output = {};
 
@@ -186,11 +213,16 @@ function extractFeatures(usgsResults) {
 
 // ── UHSLC ─────────────────────────────────────────────────
 
-// pulls most recent data for graph every 5m
+/**
+// getUHSLCOverview
+//   calls to uhslc for latest entry of each active gauge for gauge overview
+//   @param {string} locations - "gauge_id,OA-0001" string, comma seperated list of ids
+//   @returns {Object} - {'gauge_id': {'value': %f,'time': datetimez}} fetch format
+// */
 async function getUHSLCOverview(locations) {
     const url = uhslcUrl;
     const locs = locations.split(',');
-    const timerId = printTimerStart(`(->) UHSLC-Overview: ${locs.length} locations`, 1, true);
+    const timerId = printTimerStart(`(->) UHSLC-Overview: ${locs.length} locations`, 1, false);
     const timeNow = uhslcOverviewBody(getUHSLCTimeNow());
     const output = await fetchData("POST", url, "UHSLC", timeNow);
 
@@ -206,7 +238,7 @@ async function getUHSLCOverview(locations) {
                     }
                 ])
         );
-        printTimerEnd(timerId, `(<-) UHSLC-Overview`, 1, true);
+        printTimerEnd(timerId, `(<-) UHSLC-Overview`, 1, false);
 
         return dataMap;
     }
@@ -217,12 +249,27 @@ async function getUHSLCOverview(locations) {
     return;
 }
 
+/**
+// extractUHSLCData
+//   uhslc returns values wrapped in html, function extracts values
+//   @param {string} htmlString - "<i class=\"fa-solid fa-circle no-alert\"></i> 9:40 AM"
+//   @returns {string} - "%s"
+// */
 function extractUHSLCData(htmlString) { 
     return htmlString.replace(/<[^>]*>/g, '').trim(); 
 }
 
+/**
+// getAllUHSLC
+//   gets all data for uhslc gauge locations. finds time difference between table entry and new data.
+//   calls uhslc api with that date for new data for gauge graphs. runs process data on results
+//   graphs. calls process data on finish
+//   @param {Array[String]} locations - ['gauge_id']
+//   @param {Object} newData - {'gauge_id': {'value': %f,'time': datetimez}} fetch format
+//   @param {Object} currentData - {'gauge_id': {'id': %d, 'gauge_id': %s, 'fetch_datetime': datetimez, 'reading_datetime': datetimez, 'val': %f}} return from table format
+//   @returns {Object} - {'gauge_id': {'response':{}}}
+// */
 async function getAllUHSLC(locations, newOverview, currOverview) {
-    return null;
     // calculate start and end time for each call
     const calls = [];
     locations.forEach((location) => {
@@ -240,26 +287,52 @@ async function getAllUHSLC(locations, newOverview, currOverview) {
     });
 
     // makes call for each item
-    const timerId = printTimerStart(`(->) UHSLC-Data: ${locations.length} locations`, 1);
-    const results = await Promise.all(
+    const timerId = printTimerStart(`(->) UHSLC-Data: ${locations.length} locations`, 1, false);
+    const resultsArray = await Promise.all(
         calls.map(({ start, end, id }) => {
             const url = uhslcUrl;
             const callTimerId = printTimerStart();
 
             return fetchData("POST", url, "UHSLC", uhslcDataBody(start, end, id)).then(result => {
-                printTimerEnd(callTimerId, `(<-) items`, 2);
-                return result;
+                printTimerEnd(callTimerId, `(<-) UHSLC: items`, 2, false);
+                return { id, result };
             });
         })
     );
-    printTimerEnd(timerId, `(<-) UHSLC-Data`, 1);
+    const results = Object.fromEntries(resultsArray.map(({ id, result }) => [id, result]));
+
+    printTimerEnd(timerId, `(<-) UHSLC-Data`, 1, false);
 
     return processUHSLCData(results);
 }
 
+/**
+// getAllUHSLC
+//   converts raw uhslc data reponse to form that addNewData can process 
+//   @param {Object} results - {'gauge_id': {'response':{}}}
+//   @returns {Object} - {'gauge_id': [{'time': datetimez, 'value': %f}]}
+// */
 function processUHSLCData(results) {
-    if (!results?.response?.['fig-water-level']?.figure?.data?.length) return;
-    const data = results.response['fig-water-level'].figure.data.find(d => d.name == "Water level");
+    if (!results) return;
+
+    const output = {};
+    Object.entries(results).forEach(([id, result]) => {
+        if (!result?.response?.['fig-water-level']?.figure?.data?.length) return;
+        const data = result.response['fig-water-level'].figure.data.find(d => d.name == "Water level");
+        
+        const dataArray = [];
+        for (let i = data.x.length - 1; i >= 0; i--) {
+            if (data.x[i] && data.y[i]) {
+                dataArray.push({
+                    time: data.x[i],
+                    value: data.y[i]
+                });
+            }
+        }
+        output[id] = dataArray;
+    });
+
+    return output;
 }
 
 

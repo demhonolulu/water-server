@@ -49,6 +49,12 @@ function getUHSLCTimeNow() {
     }).replace(',', '').replace('at ', '') + ' HST';
 }
 
+/**
+// getUHSLCDate
+//   takes in a time recieved from uhslc and converts it into datetime
+//   @param {String} timeString - '%s' 9:45 PM
+//   @returns {Date}
+// */
 function getUHSLCDate(timeString) {
     const timeMatch = timeString.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
     if (!timeMatch) throw new Error(`Invalid time format: ${timeString}`);
@@ -60,7 +66,7 @@ function getUHSLCDate(timeString) {
     if (meridiem === 'AM' && hours === 12) hours = 0;
     if (meridiem === 'PM' && hours !== 12) hours += 12;
 
-    // Get today's date components in Hawaii time (UTC-10, no DST)
+    // todyas date in components
     const now = new Date();
     const hawaiiNow = new Date(now.getTime() - 10 * 60 * 60 * 1000);
 
@@ -68,10 +74,10 @@ function getUHSLCDate(timeString) {
     let month = hawaiiNow.getUTCMonth();
     let day   = hawaiiNow.getUTCDate();
 
-    // Build the candidate date in UTC
+    // build date in utc
     let utcMs = Date.UTC(year, month, day, hours + 10, minutes);
 
-    // If the result is in the future, the reading must be from yesterday
+    // if result is in the future, reading must be from yesterday
     if (utcMs > now.getTime()) {
         utcMs -= 24 * 60 * 60 * 1000;
     }
@@ -79,6 +85,12 @@ function getUHSLCDate(timeString) {
     return new Date(utcMs);
 }
 
+/**
+// getAllUHSLC
+//   takes in a time in hours and returns the time now and before for uhslc data post body
+//   @param {Int} time - %d time in hours
+//   @returns {Object} - {'startDate': datetimez, 'endDate': datetimez}
+// */
 function getUHSLCDataDates(time) {
     const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Pacific/Honolulu" }));
     const end = now.toISOString().split('T')[0];
