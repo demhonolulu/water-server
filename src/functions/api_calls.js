@@ -85,7 +85,7 @@ async function getUSGSGOverview(locations) {
                 f.properties.monitoring_location_id,
                 {
                     value: parseFloat(f.properties.value),
-                    time: f.properties.time
+                    time: new Date(f.properties.time)
                 }
             ])
         );
@@ -197,7 +197,7 @@ function extractFeatures(usgsResults) {
 
             if (!output[monitoring_location_id]) output[monitoring_location_id] = [];
             output[monitoring_location_id].push({
-                time,
+                time: new Date(time),
                 value: parseFloat(value)
             });
         });
@@ -324,7 +324,7 @@ function processUHSLCData(results) {
         for (let i = data.x.length - 1; i >= 0; i--) {
             if (data.x[i] && data.y[i]) {
                 dataArray.push({
-                    time: data.x[i],
+                    time: new Date(data.x[i]),
                     value: data.y[i]
                 });
             }

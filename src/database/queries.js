@@ -42,7 +42,7 @@ async function getActiveLocationsDB(groupBy = null) {
             return;
         }
         
-        console.log("call db")
+        printToLog("Refreshed active locations");
         const locations = await getFromTable('gauge_locations', [], 'active = TRUE');
         if (locations.rows < 1) {
             // no active locations
@@ -63,7 +63,7 @@ async function getCurrentOverview(locations) {
     const gauges = await getFromTable(
         'update_logs', 
         [locationsArray], 
-        `gauge_id = ANY($1)`, 
+        `gauge_id = ANY($1) AND has_data = TRUE`, 
         'gauge_id', 
         'gauge_id, reading_datetime DESC'
     );

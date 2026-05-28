@@ -25,35 +25,39 @@ async function pullGaugeData(locations = null) {
         const timerId = printTimerStart(`Starting pullGaugeData`, 0, false);
 
         const ACTIVE_LOCATIONS = await getActiveLocations();
+        const USGS = { locations: ACTIVE_LOCATIONS['USGS'] };
+        const UHSLC = { locations: ACTIVE_LOCATIONS['UHSLC'] };
 
         // gets most recent data point
-        const [usgsDataOverview, uhslcDataOverview, currentData] = await Promise.all([
-            getUSGSGOverview(ACTIVE_LOCATIONS['USGS']),
-            getUHSLCOverview(ACTIVE_LOCATIONS['UHSLC']),
-            getCurrentOverview(`${ACTIVE_LOCATIONS['USGS']},${ACTIVE_LOCATIONS['UHSLC']}`)
+        [USGS.overview, UHSLC.overview, currentData] = await Promise.all([
+            getUSGSGOverview(USGS.locations),
+            getUHSLCOverview(UHSLC.locations),
+            getCurrentOverview(`${USGS.locations},${UHSLC.locations}`)
         ]);
+        USGS.current = currentData?.USGS;
+        UHSLC.current = currentData?.UHSLC;
 
         // gets list of gauges that have updated
-        const usgsUpdates = createUpdateList(usgsDataOverview, currentData?.USGS);
-        const uhslcUpdates = createUpdateList(uhslcDataOverview, currentData?.UHSLC);
+        USGS.updates = createUpdateList(USGS.overview, USGS.current);
+        UHSLC.updates = createUpdateList(UHSLC.overview, UHSLC.current);
 
         // gets all data for updated gauges
-        const [usgsData, uhslcData] = await Promise.all([
-            getAllUSGS(usgsUpdates, usgsDataOverview, currentData?.USGS),
-            getAllUHSLC(uhslcUpdates, uhslcDataOverview, currentData?.UHSLC),
+        [USGS.data, UHSLC.data] = await Promise.all([
+            getAllUSGS(USGS.updates, USGS.overview, USGS.current),
+            getAllUHSLC(UHSLC.updates, UHSLC.overview, UHSLC.current),
         ]);
 
         // add new data to gauge_readings and update_logs tables
         const [usgsLog, uhslcLog] = await Promise.all([
-            addNewData(usgsData, currentData?.USGS),
-            addNewData(uhslcData, currentData?.UHSLC),
+            addNewData(USGS.data, USGS.overview, USGS.current),
+            addNewData(UHSLC.data, UHSLC.overview, UHSLC.current),
         ]);
 
         // print results
-        const gaugeCountUSGS = Object.keys(usgsData).length;
-        const gaugeCountUHSLC = Object.keys(uhslcData).length;
-        const totalItemsUSGS = Object.values(usgsData).reduce((sum, arr) => sum + arr.length, 0);
-        const totalItemsUHSLC = Object.values(uhslcData).reduce((sum, arr) => sum + arr.length, 0);
+        const gaugeCountUSGS = Object.keys(USGS.data).length;
+        const gaugeCountUHSLC = Object.keys(UHSLC.data).length;
+        const totalItemsUSGS = Object.values(USGS.data).reduce((sum, arr) => sum + arr.length, 0);
+        const totalItemsUHSLC = Object.values(UHSLC.data).reduce((sum, arr) => sum + arr.length, 0);
         const elapsed = printTimerEnd(timerId, `Finished pullGaugeData`, 0, false);
         addToOutputLog(`Pulled ${totalItemsUSGS} points from ${gaugeCountUSGS} USGS gauges and ${totalItemsUHSLC} points from ${gaugeCountUHSLC} UHSLC gauges in ${elapsed}ms`);
     }
@@ -99,9 +103,10 @@ function createUpdateList(newData, currentData) {
 //   filters data to only add data that doesnt exist in tables. groups them all into
 //   a single call to add to tables.
 //   @param {Object} newData - {'gauge_id': [{'time': datetimez, 'value': %f}]}
+//   @param {Object} overview - {'gauge_id': {'value': %f,'time': datetimez}} fetch format
 //   @param {Object} currentData - {'gauge_id': {'id': %d, 'gauge_id': %s, 'fetch_datetime': datetimez, 'reading_datetime': datetimez, 'val': %f}} return from table format
 // */
-async function addNewData(newData, currentData) {
+async function addNewData(newData, overview, currentData) {
     if (!newData) return;
     const updateLogs = [];
     const gaugeReadings = [];
@@ -111,6 +116,20 @@ async function addNewData(newData, currentData) {
 
         // add first entry to update logs
         const latestReading = data[0];
+
+        console.log(location)
+        console.log(latestReading.time)
+        console.log(overview[location]?.time)
+        if (latestReading.time < overview[location]?.time) {
+            console.log("dont add");
+            updateLogs.push({
+                gauge_id: location,
+                reading_datetime: latestReading.time,
+                val: latestReading.value,
+                has_data: false
+            });
+            return;
+        }
         updateLogs.push({
             gauge_id: location,
             reading_datetime: latestReading.time,

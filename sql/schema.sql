@@ -40,7 +40,8 @@ CREATE TABLE update_logs (
     gauge_id VARCHAR(50) REFERENCES gauge_locations(gauge_id),
     fetch_datetime TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     reading_datetime TIMESTAMP WITH TIME ZONE,
-    val DECIMAL(6, 2)
+    val DECIMAL(6, 2),
+    has_date BOOLEAN NOT NULL
 );
 
 -- Daily Summaries Table
