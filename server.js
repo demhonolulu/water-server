@@ -38,6 +38,14 @@ app.get('/', (req, res) => {
     `);
 });
 
+const asyncHandler = (fn) => (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+app.use((err, req, res, next) => {
+    res.status(500).send("Task failed: " + err.message);
+});
+
 const sanitize = (allowedKeys) => (req, res, next) => {
     req.query = sanitizeQueryParams(req.query, allowedKeys);
     next();
@@ -93,6 +101,12 @@ app.get('/get-graph-data', async (req, res) => {
 //     const { id, filter } = req.query; // only these 2 come through
 //     ...
 // });
+
+// // After
+// app.get('/get-table-overview', sanitize(['table']), asyncHandler(async (req, res) => {
+//     const overview = await getTableOverview(req.query.table);
+//     res.status(200).json(overview);
+// }));
 
 app.listen(PORT, () => {
     console.log("server running");
