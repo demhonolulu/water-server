@@ -6,6 +6,7 @@ const { pullGaugeData } = require("./src/scheduled/pull_new_data");
 
 // apis
 const { getActiveLocations } = require('./src/api/get_active_locations');
+const { getTableOverview } = require('./src/api/get_table_overview');
 
 const app = express();
 const PORT = 3000;
@@ -52,6 +53,15 @@ app.get('/get-active-locations', async (req, res) => {
     try {
         const locations = await getActiveLocations();
         res.status(200).json(locations);
+    } catch (error) {
+        res.status(500).send("Task failed: " + error.message);
+    }
+});
+
+app.get('/get-table-overview', async (req, res) => {
+    try {
+        const overview = await getTableOverview();
+        res.status(200).json(overview);
     } catch (error) {
         res.status(500).send("Task failed: " + error.message);
     }

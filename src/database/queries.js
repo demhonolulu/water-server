@@ -91,7 +91,7 @@ async function createGaugeTypeMap() {
 
 async function addToUpdateLogs(updates) {
     const timerId = printTimerStart();
-    await bulkInsertToTable('update_logs', ['gauge_id', 'reading_datetime', 'val'], updates);
+    await bulkInsertToTable('update_logs', ['gauge_id', 'reading_datetime', 'val', 'has_data'], updates);
     printTimerEnd(timerId, `[->] Update_Logs: ${updates.length} rows`, 1, false);
 }
 

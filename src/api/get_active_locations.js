@@ -5,7 +5,7 @@ let ACTIVE_LOCATIONS_DATE = null;
 
 async function getActiveLocations() {
     const today = new Date().toDateString();
-    if (ACTIVE_LOCATIONS && ACTIVE_LOCATIONS_DATE === today) {
+    if (ACTIVE_LOCATIONS && ACTIVE_LOCATIONS_DATE == today) {
         return ACTIVE_LOCATIONS;
     }
 

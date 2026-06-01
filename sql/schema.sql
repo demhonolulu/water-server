@@ -41,7 +41,7 @@ CREATE TABLE update_logs (
     fetch_datetime TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     reading_datetime TIMESTAMP WITH TIME ZONE,
     val DECIMAL(6, 2),
-    has_date BOOLEAN NOT NULL
+    has_data BOOLEAN NOT NULL
 );
 
 -- Daily Summaries Table

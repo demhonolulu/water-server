@@ -102,6 +102,9 @@
     },
     "val": {
       "type": "number"
+    },
+    "has_data": {
+      "type": "boolean"
     }
   },
 

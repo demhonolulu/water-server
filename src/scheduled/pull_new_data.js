@@ -120,6 +120,7 @@ async function addNewData(newData, overview, currentData) {
         console.log(location)
         console.log(latestReading.time)
         console.log(overview[location]?.time)
+        const hasData = !(latestReading.time < overview[location]?.time);
         if (latestReading.time < overview[location]?.time) {
             console.log("dont add");
             updateLogs.push({
@@ -133,7 +134,8 @@ async function addNewData(newData, overview, currentData) {
         updateLogs.push({
             gauge_id: location,
             reading_datetime: latestReading.time,
-            val: latestReading.value
+            val: latestReading.value,
+            has_data: true
         });
 
         // filter new entries
