@@ -1,12 +1,15 @@
 const express = require('express');
 const cron = require("node-cron");
 
+// scheduled 
+const { createDailyReport } = require("./src/scheduled/create_daily_report");
 const { updateLocations } = require("./src/scheduled/update_locations");
 const { pullGaugeData } = require("./src/scheduled/pull_new_data");
 
 // apis
 const { getActiveLocations } = require('./src/api/get_active_locations');
 const { getTableOverview } = require('./src/api/get_table_overview');
+const { getGraphData } = require('./src/api/get_graph_data');
 
 const app = express();
 const PORT = 3000;
@@ -61,6 +64,15 @@ app.get('/get-active-locations', async (req, res) => {
 app.get('/get-table-overview', async (req, res) => {
     try {
         const overview = await getTableOverview();
+        res.status(200).json(overview);
+    } catch (error) {
+        res.status(500).send("Task failed: " + error.message);
+    }
+});
+
+app.get('/get-graph-data', async (req, res) => {
+    try {
+        const overview = await getGraphData();
         res.status(200).json(overview);
     } catch (error) {
         res.status(500).send("Task failed: " + error.message);
