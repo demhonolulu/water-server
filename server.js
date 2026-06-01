@@ -38,6 +38,11 @@ app.get('/', (req, res) => {
     `);
 });
 
+const sanitize = (allowedKeys) => (req, res, next) => {
+    req.query = sanitizeQueryParams(req.query, allowedKeys);
+    next();
+};
+
 // update locations
 app.get('/update-locations', async (req, res) => {
     console.log("/update-locations called");
@@ -79,6 +84,16 @@ app.get('/get-graph-data', async (req, res) => {
     }
 });
 
+// app.get('/get-table-overview', sanitize(['table', 'limit', 'offset']), async (req, res) => {
+//     const { table, limit, offset } = req.query; // only these 3 come through
+//     ...
+// });
+
+// app.get('/other-route', sanitize(['id', 'filter']), async (req, res) => {
+//     const { id, filter } = req.query; // only these 2 come through
+//     ...
+// });
+
 app.listen(PORT, () => {
     console.log("server running");
 });
@@ -86,3 +101,24 @@ app.listen(PORT, () => {
 cron.schedule("0 0 1 * *", async () => {
   console.log("Monthly job running");
 });
+
+function sanitizeQueryParams(query, allowedKeys = []) {
+    const sanitized = {};
+
+    for (const key of allowedKeys) {
+        const value = query[key];
+        if (value === undefined) continue;
+        if (typeof value !== 'string') continue;
+
+        sanitized[key] = value
+            .trim()
+            .replace(/[<>'"`;]/g, '')
+            .replace(/--/g, '')
+            .slice(0, 200);
+    }
+
+    if (sanitized.limit) sanitized.limit = Math.abs(parseInt(sanitized.limit)) || 100;
+    if (sanitized.offset) sanitized.offset = Math.abs(parseInt(sanitized.offset)) || 0;
+
+    return sanitized;
+}
