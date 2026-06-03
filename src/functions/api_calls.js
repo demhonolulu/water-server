@@ -1,4 +1,4 @@
-const { usgsAPIKey, usgsBaseUrl, usgsTableUrl, usgsGraphUrl, uhslcUrl } = require("../config/env");
+const { DEBUG, usgsAPIKey, usgsBaseUrl, usgsTableUrl, usgsGraphUrl, uhslcUrl } = require("../config/env");
 const { uhslcOverviewBody, uhslcDataBody } = require("./uhslc.js");
 const { timeDifferenceInHours, getUHSLCTimeNow, getUHSLCDate, getUHSLCDataDates } = require("./time.js");
 const { printToLog, printTimerStart, printTimerEnd } = require("./logs.js");
@@ -76,7 +76,7 @@ async function getUSGSLocationInfo(locations) {
 async function getUSGSGOverview(locations) {
     const url = usgsTableUrl + locations
     const count = locations.split(',').length;
-    const timerId = printTimerStart(`(->) USGS-Overview: ${count} locations`, 1, false);
+    const timerId = printTimerStart(`(->) USGS-Overview: ${count} locations`, 1, DEBUG);
     const output = await fetchData("GET", url, "USGS");
 
     if (output?.features?.length > 0) {
@@ -89,13 +89,13 @@ async function getUSGSGOverview(locations) {
                 }
             ])
         );
-        printTimerEnd(timerId, `(<-) USGS-Overview`, 1, false);
+        printTimerEnd(timerId, `(<-) USGS-Overview`, 1, DEBUG);
 
         return featureMap;
     }
 
     // clear timer
-    printTimerEnd(timerId);
+    printTimerEnd(timerId, `(<-) USGS-Overview: FAILED`, 1, DEBUG);
     // TODO throw error
     return;
 }
@@ -165,19 +165,19 @@ async function getAllUSGS(locations, newOverview, currOverview) {
     });
 
     // makes call for each item
-    const timerId = printTimerStart(`(->) USGS-Data: ${locations.length} locations in ${calls.length} calls`, 1, false);
+    const timerId = printTimerStart(`(->) USGS-Data: ${locations.length} locations in ${calls.length} calls`, 1, DEBUG);
     const results = await Promise.all(
         calls.map(({ time, ids }) => {
             const url = `${usgsGraphUrl}${time}H&monitoring_location_id=${ids}`;
             const callTimerId = printTimerStart();
 
             return fetchData("GET", url, "USGS").then(result => {
-                printTimerEnd(callTimerId, `(<-) USGS: ${result?.numberReturned} items`, 2, false);
+                printTimerEnd(callTimerId, `(<-) USGS: ${result?.numberReturned} items`, 2, DEBUG);
                 return result;
             });
         })
     );
-    printTimerEnd(timerId, `(<-) USGS-Data`, 1, false);
+    printTimerEnd(timerId, `(<-) USGS-Data`, 1, DEBUG);
     
     return extractFeatures(results);
 }
@@ -222,10 +222,9 @@ function extractFeatures(usgsResults) {
 async function getUHSLCOverview(locations) {
     const url = uhslcUrl;
     const locs = locations.split(',');
-    const timerId = printTimerStart(`(->) UHSLC-Overview: ${locs.length} locations`, 1, false);
+    const timerId = printTimerStart(`(->) UHSLC-Overview: ${locs.length} locations`, 1, DEBUG);
     const timeNow = uhslcOverviewBody(getUHSLCTimeNow());
     const output = await fetchData("POST", url, "UHSLC", timeNow);
-
     if (output?.response?.['station-table']?.data?.length > 0) {
         const dataMap = Object.fromEntries(
             output.response["station-table"].data
@@ -238,13 +237,13 @@ async function getUHSLCOverview(locations) {
                     }
                 ])
         );
-        printTimerEnd(timerId, `(<-) UHSLC-Overview`, 1, false);
+        printTimerEnd(timerId, `(<-) UHSLC-Overview`, 1, DEBUG);
 
         return dataMap;
     }
 
     // clear timer
-    printTimerEnd(timerId);
+    printTimerEnd(timerId, `(<-) UHSLC-Overview: FAILED`, 1, DEBUG);
     // TODO throw error
     return;
 }
@@ -287,21 +286,21 @@ async function getAllUHSLC(locations, newOverview, currOverview) {
     });
 
     // makes call for each item
-    const timerId = printTimerStart(`(->) UHSLC-Data: ${locations.length} locations`, 1, false);
+    const timerId = printTimerStart(`(->) UHSLC-Data: ${locations.length} locations`, 1, DEBUG);
     const resultsArray = await Promise.all(
         calls.map(({ start, end, id }) => {
             const url = uhslcUrl;
             const callTimerId = printTimerStart();
 
             return fetchData("POST", url, "UHSLC", uhslcDataBody(start, end, id)).then(result => {
-                printTimerEnd(callTimerId, `(<-) UHSLC: items`, 2, false);
+                printTimerEnd(callTimerId, `(<-) UHSLC: items`, 2, DEBUG);
                 return { id, result };
             });
         })
     );
     const results = Object.fromEntries(resultsArray.map(({ id, result }) => [id, result]));
 
-    printTimerEnd(timerId, `(<-) UHSLC-Data`, 1, false);
+    printTimerEnd(timerId, `(<-) UHSLC-Data`, 1, DEBUG);
 
     return processUHSLCData(results);
 }

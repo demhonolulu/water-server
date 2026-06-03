@@ -65,55 +65,33 @@ app.get('/update-locations', async (req, res) => {
     }
 });
 
-app.get('/get-active-locations', async (req, res) => {
-    try {
-        const locations = await getActiveLocations();
-        res.status(200).json(locations);
-    } catch (error) {
-        res.status(500).send("Task failed: " + error.message);
-    }
-});
+app.get('/get-active-locations', sanitize([]), asyncHandler(async (req, res) => {
+    const locations = await getActiveLocations();
+    res.status(200).json(locations);
+}));
 
-app.get('/get-table-overview', async (req, res) => {
-    try {
-        const overview = await getTableOverview();
-        res.status(200).json(overview);
-    } catch (error) {
-        res.status(500).send("Task failed: " + error.message);
-    }
-});
+app.get('/get-table-overview', sanitize([]), asyncHandler(async (req, res) => {
+    const overview = await getTableOverview();
+    res.status(200).json(overview);
+}));
 
-app.get('/get-graph-data', async (req, res) => {
-    try {
-        const overview = await getGraphData();
-        res.status(200).json(overview);
-    } catch (error) {
-        res.status(500).send("Task failed: " + error.message);
-    }
-});
+app.get('/get-graph-data', sanitize([]), asyncHandler(async (req, res) => {
+    const data = await getGraphData();
+    res.status(200).json(data);
+}));
 
-// app.get('/get-table-overview', sanitize(['table', 'limit', 'offset']), async (req, res) => {
-//     const { table, limit, offset } = req.query; // only these 3 come through
-//     ...
-// });
+// testing endpoints only should not be exposed
+app.get('/create-daily-report', sanitize([]), asyncHandler(async (req, res) => {
+    const ACTIVE_LOCATIONS = await getActiveLocations();
+    const date = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+    const data = await createDailyReport(`${ACTIVE_LOCATIONS['USGS']},${ACTIVE_LOCATIONS['UHSLC']}`, { date });
+    // const data = await createDailyReport(`USGS-16200000`, { date });
+    res.status(200).json(data);
+}));
 
-// app.get('/other-route', sanitize(['id', 'filter']), async (req, res) => {
-//     const { id, filter } = req.query; // only these 2 come through
-//     ...
-// });
-
-// // After
-// app.get('/get-table-overview', sanitize(['table']), asyncHandler(async (req, res) => {
-//     const overview = await getTableOverview(req.query.table);
-//     res.status(200).json(overview);
-// }));
 
 app.listen(PORT, () => {
     console.log("server running");
-});
-
-cron.schedule("0 0 1 * *", async () => {
-  console.log("Monthly job running");
 });
 
 function sanitizeQueryParams(query, allowedKeys = []) {

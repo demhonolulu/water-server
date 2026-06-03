@@ -2,6 +2,8 @@
 // information logging and printing; mostly for debugging
 // ──────────────────────────────────────────────────────────
 
+// const { printToLog, printTimerStart, printTimerEnd, addToOutputLog } = require("../functions/logs.js"); // import function
+
 const { getHawaiiTimeNow, startTimer, endTimer } = require("./time.js");
 
 const fs = require('fs');
@@ -24,7 +26,7 @@ class ErrorMessage extends Error {
 }
 
 function printToLog(message, indent = 0, visible = true) {
-    const text = `[${getHawaiiTimeNow()}] ${getIndentString(indent)}${message}`;
+    const text = `${`[${getHawaiiTimeNow()}]`.padEnd(25)} ${getIndentString(indent)}${message}`;
     if (visible) {
         console.log(text);
     }

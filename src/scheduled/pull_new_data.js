@@ -2,6 +2,7 @@ const { getUSGSGOverview, getUHSLCOverview, getAllUSGS, getAllUHSLC } = require(
 const { printToLog, printTimerStart, printTimerEnd, addToOutputLog } = require("../functions/logs.js");
 const { getCurrentOverview, addToUpdateLogs, addGaugeReadings } = require("../database/queries.js");
 const { getActiveLocations } = require("../api/get_active_locations.js");
+const { DEBUG } = require("../config/env");
 
 const cron = require("node-cron");
 const { bulkInsertToTable } = require("../database/db.js");
@@ -22,7 +23,7 @@ cron.schedule("*/5 * * * *", async () => {
 // */
 async function pullGaugeData(locations = null) {    
     try {
-        const timerId = printTimerStart(`Starting pullGaugeData`, 0, false);
+        const timerId = printTimerStart(`Starting pullGaugeData`, 0, DEBUG);
 
         const ACTIVE_LOCATIONS = await getActiveLocations();
         const USGS = { locations: ACTIVE_LOCATIONS['USGS'] };
@@ -54,11 +55,11 @@ async function pullGaugeData(locations = null) {
         ]);
 
         // print results
-        const gaugeCountUSGS = Object.keys(USGS.data).length;
-        const gaugeCountUHSLC = Object.keys(UHSLC.data).length;
-        const totalItemsUSGS = Object.values(USGS.data).reduce((sum, arr) => sum + arr.length, 0);
-        const totalItemsUHSLC = Object.values(UHSLC.data).reduce((sum, arr) => sum + arr.length, 0);
-        const elapsed = printTimerEnd(timerId, `Finished pullGaugeData`, 0, false);
+        const gaugeCountUSGS = Object.keys(USGS.data ?? {}).length;
+        const gaugeCountUHSLC = Object.keys(UHSLC.data ?? {}).length;
+        const totalItemsUSGS = Object.values(USGS.data ?? {}).reduce((sum, arr) => sum + arr.length, 0);
+        const totalItemsUHSLC = Object.values(UHSLC.data ?? {}).reduce((sum, arr) => sum + arr.length, 0);
+        const elapsed = printTimerEnd(timerId, `Finished pullGaugeData`, 0, DEBUG);
         addToOutputLog(`Pulled ${totalItemsUSGS} points from ${gaugeCountUSGS} USGS gauges and ${totalItemsUHSLC} points from ${gaugeCountUHSLC} UHSLC gauges in ${elapsed}ms`);
     }
     catch (error) {
@@ -117,9 +118,6 @@ async function addNewData(newData, overview, currentData) {
         // add first entry to update logs
         const latestReading = data[0];
 
-        console.log(location)
-        console.log(latestReading.time)
-        console.log(overview[location]?.time)
         const hasData = !(latestReading.time < overview[location]?.time);
         if (latestReading.time < overview[location]?.time) {
             console.log("dont add");

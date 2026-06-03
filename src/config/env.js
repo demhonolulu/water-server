@@ -2,6 +2,7 @@ require("dotenv").config();
 
 // pulls items from .env file and exposes it individually
 module.exports = {
+    DEBUG: process.env.DEBUG,
     usgsAPIKey: process.env.USGS_API_KEY,
     usgsBaseUrl: process.env.USGS_BASE_URL,
     usgsTableUrl: process.env.USGS_TABLE_URL,

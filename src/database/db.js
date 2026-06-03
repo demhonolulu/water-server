@@ -23,16 +23,20 @@ const MAX_PARAMS = 65535;
 //   @param {string} whereClause* - WHERE 'whereClause'
 //   @param {string} distinct* - DISTINCT ON (distinct)
 //   @param {string} order* - ORDER BY 'order'
+//   @param {string} join* - u JOIN 'join'
 // */
-async function getFromTable(table, params = [], whereClause = "1=1", distinct = null, order = null) {
-    const distinctClause = distinct ? `DISTINCT ON (${distinct})` : '';
+async function getFromTable(table, params = [], whereClause = "1=1", distinct = null, order = null, join = null) {
+    const distinctClause = distinct ? `DISTINCT ON ${distinct}` : ' *';
+    const joinClause = join ? `u JOIN ${join}` : '';
     const orderClause = order ? `ORDER BY ${order}` : '';
     const queryText = `
-        SELECT ${distinctClause} * 
-        FROM ${table}
+        SELECT ${distinctClause} 
+        FROM ${table} ${joinClause}
         WHERE ${whereClause}
         ${orderClause}
     `;
+
+    //console.log(queryText);
 
     try {
         const result = await pool.query(queryText, params);

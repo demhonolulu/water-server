@@ -20,7 +20,7 @@ CREATE TABLE gauge_locations (
 );
 
 -- Gauge Readings Table
---   actual gauge data, data will be every 5 min, but updated every hour 
+--   actual gauge data, data will be every 5 min, but updated depends on gauge transmission frequency
 --   for gauge graph, pull single gauge_id - most recent week
 --   data kept for 1 week
 CREATE TABLE gauge_readings (
