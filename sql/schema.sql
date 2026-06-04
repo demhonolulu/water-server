@@ -20,9 +20,9 @@ CREATE TABLE gauge_locations (
 );
 
 -- Gauge Readings Table
---   actual gauge data, data will be every 5 min, but updated depends on gauge transmission frequency
+--   actual gauge data, new data added every 5 mins, but updated depends on gauge transmission frequency
 --   for gauge graph, pull single gauge_id - most recent week
---   data kept for 1 week
+--   data kept for 1 month
 CREATE TABLE gauge_readings (
     id SERIAL PRIMARY KEY,
     gauge_id VARCHAR(50) REFERENCES gauge_locations(gauge_id),
@@ -32,16 +32,17 @@ CREATE TABLE gauge_readings (
 );
 
 -- Update Logs Table
---   list of all times we got new gauge readings
+--   list of all times recieved new data, every ~10-60mins
 --   for gauge table, pull all gauge_ids - most recent entry + 1h previous
---   data kept for 1 week
+--   data kept for 1 month
 CREATE TABLE update_logs (
     id SERIAL PRIMARY KEY,
     gauge_id VARCHAR(50) REFERENCES gauge_locations(gauge_id),
     fetch_datetime TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     reading_datetime TIMESTAMP WITH TIME ZONE,
     val DECIMAL(6, 2),
-    has_data BOOLEAN NOT NULL
+    has_data BOOLEAN NOT NULL,
+    diff BIGINT
 );
 
 -- Daily Summaries Table

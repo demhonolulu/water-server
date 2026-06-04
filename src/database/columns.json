@@ -105,6 +105,9 @@
     },
     "has_data": {
       "type": "boolean"
+    },
+    "diff": {
+      "type": "integer"
     }
   },
 

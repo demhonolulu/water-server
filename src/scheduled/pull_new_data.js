@@ -125,15 +125,18 @@ async function addNewData(newData, overview, currentData) {
                 gauge_id: location,
                 reading_datetime: latestReading.time,
                 val: latestReading.value,
-                has_data: false
+                has_data: false,
+                diff: null
             });
             return;
         }
+        const diffSeconds = Math.round((Date.now() - new Date(latestReading.time)) / 1000);
         updateLogs.push({
             gauge_id: location,
             reading_datetime: latestReading.time,
             val: latestReading.value,
-            has_data: true
+            has_data: true,
+            diff: diffSeconds
         });
 
         // filter new entries

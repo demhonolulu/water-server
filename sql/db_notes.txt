@@ -1,0 +1,6 @@
+Table,Retention,Estimated Max Rows,Est. Size per Row,Total Estimated Size
+gauge_locations,Permanent,50,~500 bytes,~25 KB
+gauge_readings,1 Month,"432,000",~60 bytes,~26 MB
+update_logs,1 Month,"432,000",~70 bytes,~30 MB
+daily_summaries,1 Year,"18,250",~80 bytes,~1.5 MB
+monthly_summaries,Indefinite,600/year,~80 bytes,~48 KB/year
