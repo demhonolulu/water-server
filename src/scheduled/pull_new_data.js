@@ -130,7 +130,10 @@ async function addNewData(newData, overview, currentData) {
             });
             return;
         }
-        const diffSeconds = Math.round((Date.now() - new Date(latestReading.time)) / 1000);
+
+        const diffSeconds = currentData?.[location]?.fetch_datetime
+            ? Math.round((Date.now() - new Date(currentData[location].fetch_datetime)) / 1000)
+            : null;
         updateLogs.push({
             gauge_id: location,
             reading_datetime: latestReading.time,
