@@ -1,28 +1,25 @@
-const { getActiveLocationsDB } = require("../database/queries.js");
+const { printToLog, printTimerStart, printTimerEnd, addToOutputLog } = require("../functions/logs.js");
+const { getTableOverviewDB } = require("../database/queries.js");
+const { sanitizeGaugeIds } = require("./sanitizers.js");
 
-// async function getActiveLocations() {
-//     const today = new Date().toDateString();
-//     if (ACTIVE_LOCATIONS && ACTIVE_LOCATIONS_DATE === today) {
-//         return ACTIVE_LOCATIONS;
-//     }
-
-//     const activeLocations = await getActiveLocationsDB(['gauge_type']);
-//     ACTIVE_LOCATIONS = {};
-
-//     for (const [gaugeType, locationsArray] of Object.entries(activeLocations)) {
-//         ACTIVE_LOCATIONS[gaugeType] = locationsArray
-//             .map(loc => loc.gauge_id)
-//             .join(',');
-//     }
-
-//     ACTIVE_LOCATIONS_DATE = today;
-//     return ACTIVE_LOCATIONS;
-// }
-
-async function getGraphData() {
-
-}
+let DATA = null;
+let DATA_TIME = null;
 
 module.exports = {
     getGraphData
 };
+
+async function getGraphData(gauge_id) {
+    //sanitizeGaugeIds
+    
+    if (!gauge_id) {
+        const err = new Error('gauge_id is required');
+        err.status = 400;
+        throw err;
+    }
+
+    const now = Date.now();
+    if (DATA && DATA_TIME && (now - DATA_TIME) < 4.5 * 60 * 1000) {
+        return DATA;
+    }
+}

@@ -1,10 +1,13 @@
 const { printToLog, printTimerStart, printTimerEnd, addToOutputLog } = require("../functions/logs.js");
-
 const { getTableOverviewDB } = require("../database/queries.js");
 const { getActiveLocations } = require("./get_active_locations.js");
 
 let OVERVIEW = null;
-let OVERVIEW_DATE = null;
+let OVERVIEW_TIME = null;
+
+module.exports = {
+    getTableOverview
+};
 
 async function getTableOverview() {
     const now = Date.now();
@@ -50,7 +53,3 @@ async function getTableOverview() {
 
     return OVERVIEW;
 }
-
-module.exports = {
-    getTableOverview
-};

@@ -42,10 +42,6 @@ const asyncHandler = (fn) => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-app.use((err, req, res, next) => {
-    res.status(500).send("Task failed: " + err.message);
-});
-
 const sanitize = (allowedKeys) => (req, res, next) => {
     req.query = sanitizeQueryParams(req.query, allowedKeys);
     next();
@@ -75,8 +71,8 @@ app.get('/get-table-overview', sanitize([]), asyncHandler(async (req, res) => {
     res.status(200).json(overview);
 }));
 
-app.get('/get-graph-data', sanitize([]), asyncHandler(async (req, res) => {
-    const data = await getGraphData();
+app.get('/get-graph-data', sanitize(['gauge_id']), asyncHandler(async (req, res) => {
+    const data = await getGraphData(req?.query?.gauge_id);
     res.status(200).json(data);
 }));
 
@@ -114,3 +110,8 @@ function sanitizeQueryParams(query, allowedKeys = []) {
 
     return sanitized;
 }
+
+app.use((err, req, res, next) => {
+    if (!err.status || err.status === 500) console.error(err);
+    res.status(err.status || 500).json({ error: err.message });
+});
