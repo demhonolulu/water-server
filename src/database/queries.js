@@ -181,8 +181,22 @@ async function addToUpdateLogs(updates) {
 
 async function addGaugeReadings(updates) {
     const timerId = printTimerStart();
-    await bulkInsertToTable('gauge_readings', ['gauge_id', 'reading_datetime', 'val'], updates)
+    await bulkInsertToTable('gauge_readings', ['gauge_id', 'reading_datetime', 'val'], updates);
     printTimerEnd(timerId, `[->] Gauge_Readings: ${updates.length} rows`, 1, DEBUG);
+}
+
+async function addSummaryReport(table, updates) {
+    const timerId = printTimerStart();
+    const columns = ['gauge_id', 'report_count', 'min_val', 'min_date', 'max_val', 'max_date', 'avg_val', 'min_wait', 'min_wait_date', 'max_wait', 'max_wait_date', 'avg_wait'];
+    if (table = 'daily_summaries') {
+        columns.push('report_date');
+    }
+    else {
+        columns.push('report_month', 'report_year');
+    }
+    await bulkInsertToTable(table, columns, updates);
+
+    printTimerEnd(timerId, `[->] ${table}: ${updates.length} rows`, 1, DEBUG);
 }
 
 module.exports = {
@@ -191,5 +205,6 @@ module.exports = {
     getTableOverviewDB,
     fetchRowsForReport,
     addToUpdateLogs,
-    addGaugeReadings
+    addGaugeReadings,
+    addSummaryReport
 };

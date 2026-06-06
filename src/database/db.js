@@ -81,7 +81,7 @@ async function bulkInsertToTable(table, columns, dataArray) {
             INSERT INTO ${table} (${columnNames})
             VALUES ${valuePlaceholders.join(', ')}
         `;
-
+        
         try {
             const result = await pool.query(queryText, values);
         } catch (err) {

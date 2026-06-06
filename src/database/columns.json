@@ -124,8 +124,14 @@
     "min_val": {
       "type": "number"
     },
+    "min_date": {
+      "type": "date"
+    },
     "max_val": {
       "type": "number"
+    },
+    "max_date": {
+      "type": "date"
     },
     "avg_val": {
       "type": "number"
@@ -133,8 +139,14 @@
     "min_wait": {
       "type": "number"
     },
+    "min_wait_date": {
+      "type": "date"
+    },
     "max_wait": {
       "type": "number"
+    },
+    "max_wait_date": {
+      "type": "date"
     },
     "avg_wait": {
       "type": "number"
@@ -165,8 +177,20 @@
     "min_val": {
       "type": "number"
     },
+    "min_date": {
+      "type": "date"
+    },
+    "min_wait_date": {
+      "type": "date"
+    },
     "max_val": {
       "type": "number"
+    },
+    "max_date": {
+      "type": "date"
+    },
+    "max_wait_date": {
+      "type": "date"
     },
     "avg_val": {
       "type": "number"
