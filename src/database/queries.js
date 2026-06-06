@@ -11,6 +11,17 @@ const gaugeTypeMap = {};
     });
 })();
 
+function groupByType(items) {
+    const output = {};
+    items.forEach((item) => {
+        const type = gaugeTypeMap[item.gauge_id];
+        if (!output[type]) output[type] = {};
+        if (!output[type][item.gauge_id]) output[type][item.gauge_id] = [];
+        output[type][item.gauge_id].push(item);
+    });
+    return output;
+}
+
 function groupLocations(items, keys) {
     if (keys.length === 0) return items;
 
@@ -76,6 +87,7 @@ async function getCurrentOverview(locations) {
         groupedByType[type][gauge.gauge_id] = gauge;
     });
 
+    console.log(groupedByType);
     return groupedByType;
 }
 
@@ -86,35 +98,21 @@ async function getCurrentOverview(locations) {
 //   @returns {Object} - {"USGS":["NORTH-SHORE":[{"gauge_id"}]], "UHSLC": []}
 // */
 async function getTableOverviewDB(locations) { 
-    // console.log(locations);
-    // const locationsArray = locations.split(',');
+    console.log(locations);
+    const locationsArray = locations.split(',');
 
-    // const [current, hourAgo] = await Promise.all([
-    //     getFromTable(
-    //         'update_logs',
-    //         [locationsArray],
-    //         `gauge_id = ANY($1) AND has_data = TRUE`,
-    //         'gauge_id',
-    //         'gauge_id, reading_datetime DESC'
-    //     ),
-    //     getFromTable(
-    //         'update_logs',
-    //         [locationsArray],
-    //         'u.has_data = TRUE AND u.reading_datetime <= curr.hour_before',
-    //         '(u.gauge_id) u.gauge_id, u.val, u.reading_datetime',
-    //         'u.gauge_id, u.reading_datetime DESC',
-    //         `(
-    //             SELECT DISTINCT ON (gauge_id) gauge_id, reading_datetime - INTERVAL '1 hour' AS hour_before
-    //             FROM update_logs
-    //             WHERE gauge_id = ANY($1)
-    //             AND has_data = TRUE
-    //             ORDER BY gauge_id, reading_datetime DESC
-    //         ) curr ON u.gauge_id = curr.gauge_id`
-    //     )
-    // ]);
+    const pastDayReadings = await getFromTable(
+        'update_logs',
+        [locationsArray],
+        `gauge_id = ANY($1) AND has_data = TRUE AND reading_datetime >= NOW() - INTERVAL '24 hours'`,
+        null,
+        'gauge_id, reading_datetime DESC'
+    );
+    //console.log(pastDayReadings);
+    return groupByType(pastDayReadings);
 
-    // console.log("current");
-    // console.log(current);
+    //console.log("current");
+    //console.log(current);
     // console.log("hour ago");
     // console.log(hourAgo);
     return;
