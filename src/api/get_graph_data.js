@@ -10,16 +10,12 @@ module.exports = {
 };
 
 async function getGraphData(gauge_id) {
-    //sanitizeGaugeIds
-    
-    if (!gauge_id) {
-        const err = new Error('gauge_id is required');
-        err.status = 400;
-        throw err;
-    }
+    const sanitizedIds = await sanitizeGaugeIds(gauge_id, true);
+    console.log(sanitizedIds);
+    return sanitizedIds;
 
-    const now = Date.now();
-    if (DATA && DATA_TIME && (now - DATA_TIME) < 4.5 * 60 * 1000) {
-        return DATA;
-    }
+    // const now = Date.now();
+    // if (DATA && DATA_TIME && (now - DATA_TIME) < 4.5 * 60 * 1000) {
+    //     return DATA;
+    // }
 }

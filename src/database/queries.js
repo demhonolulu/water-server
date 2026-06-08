@@ -87,7 +87,6 @@ async function getCurrentOverview(locations) {
         groupedByType[type][gauge.gauge_id] = gauge;
     });
 
-    console.log(groupedByType);
     return groupedByType;
 }
 
@@ -98,7 +97,6 @@ async function getCurrentOverview(locations) {
 //   @returns {Object} - {"USGS":["NORTH-SHORE":[{"gauge_id"}]], "UHSLC": []}
 // */
 async function getTableOverviewDB(locations) { 
-    console.log(locations);
     const locationsArray = locations.split(',');
 
     const pastDayReadings = await getFromTable(
@@ -108,14 +106,8 @@ async function getTableOverviewDB(locations) {
         null,
         'gauge_id, reading_datetime DESC'
     );
-    //console.log(pastDayReadings);
-    return groupByType(pastDayReadings);
 
-    //console.log("current");
-    //console.log(current);
-    // console.log("hour ago");
-    // console.log(hourAgo);
-    return;
+    return groupByType(pastDayReadings);
 }
 
 /**

@@ -36,7 +36,6 @@ async function pullGaugeData(locations = null) {
             getCurrentOverview(`${USGS.locations},${UHSLC.locations}`)
         ]);
         USGS.current = currentData?.USGS;
-        console.log(USGS.current);
         UHSLC.current = currentData?.UHSLC;
 
         // gets list of gauges that have updated
