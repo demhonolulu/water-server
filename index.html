@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Water Server</title>
+</head>
+<body>
+    <h1>Water Server</h1>
+
+    <h2>Endpoints</h2>
+
+    <div>
+        <h3>GET /get-active-locations</h3>
+        <button onclick="call('/get-active-locations')">Test</button>
+    </div>
+
+    <div>
+        <h3>GET /get-table-overview</h3>
+        <button onclick="call('/get-table-overview')">Test</button>
+    </div>
+
+    <div>
+        <h3>GET /get-graph-data</h3>
+        <label>gauge_id: <input id="gauge_id" type="text" placeholder="USGS-16200000" /></label>
+        <button onclick="call('/get-graph-data?gauge_id=' + document.getElementById('gauge_id').value)">Test</button>
+    </div>
+
+    <h2>Response</h2>
+    <pre id="output">Click a button to test an endpoint.</pre>
+
+    <script>
+        async function call(url) {
+            const output = document.getElementById('output');
+            output.innerText = 'Loading...';
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                output.innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                output.innerText = 'Error: ' + err.message;
+            }
+        }
+    </script>
+</body>
+</html>

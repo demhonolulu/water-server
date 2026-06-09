@@ -11,13 +11,22 @@ const gaugeTypeMap = {};
     });
 })();
 
-function groupByType(items) {
+function groupById(items) {
     const output = {};
     items.forEach((item) => {
-        const type = gaugeTypeMap[item.gauge_id];
+        if (!output[item.gauge_id]) output[item.gauge_id] = [];
+        output[item.gauge_id].push(item);
+    });
+    return output;
+}
+
+function groupByType(items) {
+    const grouped = groupById(items);
+    const output = {};
+    Object.entries(grouped).forEach(([gauge_id, data]) => {
+        const type = gaugeTypeMap[gauge_id];
         if (!output[type]) output[type] = {};
-        if (!output[type][item.gauge_id]) output[type][item.gauge_id] = [];
-        output[type][item.gauge_id].push(item);
+        output[type][gauge_id] = data;
     });
     return output;
 }
@@ -111,6 +120,26 @@ async function getTableOverviewDB(locations) {
 }
 
 /**
+// getGraphDataDB
+//   gets the raw data for the table overview display. pulls the most recent value
+//   for all active gauges and the reading from an hour ago
+//   @returns {Object} - {"USGS":["NORTH-SHORE":[{"gauge_id"}]], "UHSLC": []}
+// */
+async function getGraphDataDB(locationsArray) { 
+    //const locationsArray = locations.split(',');
+
+    const pastDayReadings = await getFromTable(
+        'gauge_readings',
+        [locationsArray],
+        `gauge_id = ANY($1) AND reading_datetime >= NOW() - INTERVAL '30 days'`,
+        null,
+        'gauge_id, reading_datetime DESC'
+    );
+
+    return groupById(pastDayReadings);
+}
+
+/**
 // fetchRowsForReport
 //   grabs data from the gauge_readings and update_logs tables by date
 //   @param {String} table - 'gauge_readings' or 'update_logs'
@@ -193,6 +222,7 @@ module.exports = {
     getActiveLocationsDB,
     getCurrentOverview,
     getTableOverviewDB,
+    getGraphDataDB,
     fetchRowsForReport,
     addToUpdateLogs,
     addGaugeReadings,
