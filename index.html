@@ -11,18 +11,18 @@
 
     <div>
         <h3>GET /get-active-locations</h3>
-        <button onclick="call('/get-active-locations')">Test</button>
+        <button onclick="call('/water/get-active-locations')">Test</button>
     </div>
 
     <div>
         <h3>GET /get-table-overview</h3>
-        <button onclick="call('/get-table-overview')">Test</button>
+        <button onclick="call('/water/get-table-overview')">Test</button>
     </div>
 
     <div>
         <h3>GET /get-graph-data</h3>
         <label>gauge_id: <input id="gauge_id" type="text" placeholder="USGS-16200000" /></label>
-        <button onclick="call('/get-graph-data?gauge_id=' + document.getElementById('gauge_id').value)">Test</button>
+        <button onclick="call('/water/get-graph-data?gauge_id=' + document.getElementById('gauge_id').value)">Test</button>
     </div>
 
     <h2>Response</h2>

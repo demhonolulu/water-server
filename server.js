@@ -14,7 +14,7 @@ const { getGraphData } = require('./src/api/get_graph_data');
 
 
 const app = express();
-const PORT = 3000;
+const PORT = 3001;
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));

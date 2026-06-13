@@ -140,6 +140,24 @@ async function getGraphDataDB(locationsArray) {
 }
 
 /**
+// getLocationDataDB
+//   gets the data about locations ex. location name, type, coordinates, warning levels 
+//   etc.
+//   @returns {Object} - {"USGS":["NORTH-SHORE":[{"gauge_id"}]], "UHSLC": []}
+// */
+async function getLocationDataDB(locationsArray) { 
+    //const locationsArray = locations.split(',');
+
+    const locations = await getFromTable(
+        'gauge_locations',
+        [locationsArray],
+        `gauge_id = ANY($1)`
+    );
+
+    return locations;
+}
+
+/**
 // fetchRowsForReport
 //   grabs data from the gauge_readings and update_logs tables by date
 //   @param {String} table - 'gauge_readings' or 'update_logs'
@@ -223,6 +241,7 @@ module.exports = {
     getCurrentOverview,
     getTableOverviewDB,
     getGraphDataDB,
+    getLocationDataDB,
     fetchRowsForReport,
     addToUpdateLogs,
     addGaugeReadings,
