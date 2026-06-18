@@ -64,7 +64,7 @@ async function getActiveLocationsDB(groupBy = null) {
         }
         
         printToLog("Refreshed active locations");
-        const locations = await getFromTable('gauge_locations', [], 'active = TRUE');
+        const locations = await getFromTable('gauge_locations', [], 'active = TRUE', null, 'display_order ASC');
         if (locations.rows < 1) {
             // no active locations
             return;

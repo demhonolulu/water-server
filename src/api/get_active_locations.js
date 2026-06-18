@@ -26,7 +26,7 @@ async function getActiveLocations(flat) {
             .join(',');
         
         locationsArray.forEach(loc => {
-            ACTIVE_LOCATIONS_FLAT[loc.gauge_id] = gaugeType;
+            ACTIVE_LOCATIONS_FLAT[loc.gauge_id] = { type: gaugeType, order: loc.display_order };
         });
     }
 

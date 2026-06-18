@@ -1,6 +1,7 @@
 const express = require('express');
 const cron = require("node-cron");
 const path = require('path');
+const cors = require('cors');
 
 // scheduled 
 const { createDailyReport } = require("./src/scheduled/create_daily_report");
@@ -15,6 +16,8 @@ const { getGraphData } = require('./src/api/get_graph_data');
 
 const app = express();
 const PORT = 3001;
+
+app.use(cors());
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -43,8 +46,8 @@ app.get('/update-locations', async (req, res) => {
     }
 });
 
-app.get('/get-active-locations', sanitize([]), asyncHandler(async (req, res) => {
-    const locations = await getActiveLocations();
+app.get('/get-active-locations', sanitize(['flat']), asyncHandler(async (req, res) => {
+    const locations = await getActiveLocations(req?.query?.flat);
     res.status(200).json(locations);
 }));
 
