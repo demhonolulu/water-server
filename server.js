@@ -51,8 +51,8 @@ app.get('/get-active-locations', sanitize(['flat']), asyncHandler(async (req, re
     res.status(200).json(locations);
 }));
 
-app.get('/get-table-overview', sanitize([]), asyncHandler(async (req, res) => {
-    const overview = await getTableOverview();
+app.get('/get-table-overview', sanitize(['locations']), asyncHandler(async (req, res) => {
+    const overview = await getTableOverview(req?.query?.locations);
     res.status(200).json(overview);
 }));
 

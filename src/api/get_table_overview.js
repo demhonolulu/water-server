@@ -9,14 +9,15 @@ module.exports = {
     getTableOverview
 };
 
-async function getTableOverview() {
+async function getTableOverview(locations) {
     const now = Date.now();
     if (OVERVIEW && OVERVIEW_TIME && (now - OVERVIEW_TIME) < 4.5 * 60 * 1000) {
         return OVERVIEW;
     }
 
-    const ACTIVE_LOCATIONS = await getActiveLocations();
-    const readings = await getTableOverviewDB(`${ACTIVE_LOCATIONS['USGS']},${ACTIVE_LOCATIONS['UHSLC']}`);
+    //const ACTIVE_LOCATIONS = await getActiveLocations();
+    //const readings = await getTableOverviewDB(`${ACTIVE_LOCATIONS['USGS']},${ACTIVE_LOCATIONS['UHSLC']}`);
+    const readings = await getTableOverviewDB(locations);
     const overview = [];
 
     Object.entries(readings).forEach(([type, gaugeList]) => {
