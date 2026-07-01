@@ -3,13 +3,16 @@ const columnsConfig = require("./columns.json");
 const { ErrorMessage, printToLog, printTimerStart, printTimerEnd } = require("../functions/logs.js");
 
 const { Pool } = require("pg");
+const { statement_timeout, idleTimeoutMillis } = require("pg/lib/defaults");
 
 const pool = new Pool({
     user: config.db.user,
     password: config.db.password,
     host: config.db.host,
     port: config.db.port,
-    database: config.db.database
+    database: config.db.database,
+    statement_timeout: 10000,
+    idleTimeoutMillis: 30000
 });
 
 const MAX_PARAMS = 65535;
@@ -24,9 +27,10 @@ const MAX_PARAMS = 65535;
 //   @param {string} distinct* - DISTINCT ON (distinct)
 //   @param {string} order* - ORDER BY 'order'
 //   @param {string} join* - u JOIN 'join'
+//   @param {string} columns* - SELECT 'columns'
 // */
-async function getFromTable(table, params = [], whereClause = "1=1", distinct = null, order = null, join = null) {
-    const distinctClause = distinct ? `DISTINCT ON ${distinct}` : ' *';
+async function getFromTable(table, params = [], whereClause = "1=1", distinct = null, order = null, join = null, columns = null) {
+    const distinctClause = distinct ? `DISTINCT ON ${distinct}` : ` ${columns ? columns : '*'}`;
     const joinClause = join ? `u JOIN ${join}` : '';
     const orderClause = order ? `ORDER BY ${order}` : '';
     const queryText = `

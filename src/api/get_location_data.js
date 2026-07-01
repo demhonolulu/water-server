@@ -1,18 +1,19 @@
-// const { getActiveLocations } = require("./get_active_locations.js");
+// const { getLocationData } = require("./get_location_data.js");
 
-const { getActiveLocationsDB } = require("../database/queries.js");
+const { getLocationDataDB } = require("../database/queries.js");
 
 module.exports = {
     getLocationData
 };
 
-async function getLocationData(flat) {
+async function getLocationData(locations) {
     // const today = new Date().toDateString();
     // if (ACTIVE_LOCATIONS && ACTIVE_LOCATIONS_DATE == today) {
     //     return flat ? ACTIVE_LOCATIONS_FLAT : ACTIVE_LOCATIONS;
     // }
 
-    // const activeLocations = await getActiveLocationsDB(['gauge_type']);
+    const locationsData = await getLocationDataDB(locations);
+    return locationsData;
     // ACTIVE_LOCATIONS = {};
     // ACTIVE_LOCATIONS_FLAT = {};
 

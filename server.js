@@ -10,9 +10,9 @@ const { pullGaugeData } = require("./src/scheduled/pull_new_data");
 
 // apis
 const { getActiveLocations } = require('./src/api/get_active_locations');
+const { getLocationData } = require("./src/api/get_location_data.js");
 const { getTableOverview } = require('./src/api/get_table_overview');
 const { getGraphData } = require('./src/api/get_graph_data');
-
 
 const app = express();
 const PORT = 3001;
@@ -51,8 +51,13 @@ app.get('/get-active-locations', sanitize(['flat']), asyncHandler(async (req, re
     res.status(200).json(locations);
 }));
 
-app.get('/get-table-overview', sanitize(['locations']), asyncHandler(async (req, res) => {
-    const overview = await getTableOverview(req?.query?.locations);
+app.get('/get-location-data', sanitize(['locations']), asyncHandler(async (req, res) => {
+    const locations = await getLocationData(req?.query?.locations);
+    res.status(200).json(locations);
+}));
+
+app.get('/get-table-overview', sanitize([]), asyncHandler(async (req, res) => {
+    const overview = await getTableOverview();
     res.status(200).json(overview);
 }));
 

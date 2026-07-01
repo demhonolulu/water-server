@@ -14,7 +14,7 @@ module.exports = {
 
 async function getGraphData(gauge_id) {
     const sanitizedIds = await sanitizeGaugeIds(gauge_id, true);
-
+    console.log('ids : ' + sanitizedIds);
     const output = {};
     const missing = [];
     const now = Date.now();
@@ -30,12 +30,16 @@ async function getGraphData(gauge_id) {
     });
 
     // fetch new data
-    const newData = await getGraphDataDB(missing);
-    Object.entries(newData).forEach(([gauge_id, data]) => {
-        DATA[gauge_id] = data;
-        DATA_TIME[gauge_id] = now;
-        output[gauge_id] = data;
-    });
+    console.log("missing: " + missing)
+    if (missing) {
+        const newData = await getGraphDataDB(missing);
+        console.log("new data");
+        Object.entries(newData).forEach(([gauge_id, data]) => {
+            DATA[gauge_id] = data;
+            DATA_TIME[gauge_id] = now;
+            output[gauge_id] = data;
+        });
+    }
 
     return output;
 }

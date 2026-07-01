@@ -11,12 +11,20 @@ const gaugeTypeMap = {};
     });
 })();
 
-function groupById(items) {
+function groupById(items, single) {
     const output = {};
     items.forEach((item) => {
-        if (!output[item.gauge_id]) output[item.gauge_id] = [];
-        output[item.gauge_id].push(item);
+        if (single) {
+            output[item.gauge_id] = item;
+        }
+        else {
+            if (!output[item.gauge_id]) {
+                output[item.gauge_id] = [];
+            }
+            output[item.gauge_id].push(item);
+        }
     });
+
     return output;
 }
 
@@ -50,7 +58,7 @@ function groupLocations(items, keys) {
 }
 
 /**
-// getActiveLocations
+// getActiveLocationsDB
 //   gets active locations and groups locations by array of column names. Grouping will be nested
 //   @param {string[]} groupBy - ['gauge_id', 'area']
 //   @returns {Object} - {"USGS":["NORTH-SHORE":[{"gauge_id"}]], "UHSLC": []}
@@ -72,6 +80,48 @@ async function getActiveLocationsDB(groupBy = null) {
 
         return groupLocations(locations, groupBy);
     }
+}
+
+/**
+// getLocationDataDB
+//   gets active locations and groups locations by array of column names. Grouping will be nested
+//   @param {string[]} groupBy - ['gauge_id', 'area']
+//   @returns {Object} - {"USGS":["NORTH-SHORE":[{"gauge_id"}]], "UHSLC": []}
+// */
+async function getLocationDataDB(locations) {
+    const locationsArray = locations.split(',');
+    const locationsData = await getFromTable(
+        'gauge_locations',
+        [locationsArray],
+        `gauge_id = ANY($1)`
+    );
+    //console.log(locationsArray);
+    //console.log(locationsData);
+    return groupById(locationsData, true);
+    // const locationsData = await getFromTable(
+    //     'gauge_locations', 
+    //     [locationsArray], 
+    //     'gauge_id = ANY($1) AND active = TRUE',    
+    // );
+    // console.log(locationsData);
+    // return locationsData;
+
+    // if (groupBy) {
+    //     const valid = validateColumns('gauge_locations', groupBy);
+    //     if (!valid?.valid) {
+    //         throw new ErrorMessage('getActiveLocations - Invalid column groupBy query', valid.errors);
+    //         return;
+    //     }
+        
+    //     printToLog("Refreshed active locations");
+    //     const locations = await getFromTable('gauge_locations', [], 'active = TRUE', null, 'display_order ASC');
+    //     if (locations.rows < 1) {
+    //         // no active locations
+    //         return;
+    //     }
+
+    //     return groupLocations(locations, groupBy);
+    // }*/
 }
 
 /**
@@ -133,28 +183,13 @@ async function getGraphDataDB(locationsArray) {
         [locationsArray],
         `gauge_id = ANY($1) AND reading_datetime >= NOW() - INTERVAL '30 days'`,
         null,
-        'gauge_id, reading_datetime DESC'
+        'gauge_id, reading_datetime DESC',
+        null,
+        'gauge_id, reading_datetime, val'
     );
 
-    return groupById(pastDayReadings);
-}
-
-/**
-// getLocationDataDB
-//   gets the data about locations ex. location name, type, coordinates, warning levels 
-//   etc.
-//   @returns {Object} - {"USGS":["NORTH-SHORE":[{"gauge_id"}]], "UHSLC": []}
-// */
-async function getLocationDataDB(locationsArray) { 
-    //const locationsArray = locations.split(',');
-
-    const locations = await getFromTable(
-        'gauge_locations',
-        [locationsArray],
-        `gauge_id = ANY($1)`
-    );
-
-    return locations;
+    const grouped = groupById(pastDayReadings);
+    return grouped;
 }
 
 /**
